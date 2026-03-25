@@ -223,7 +223,7 @@ textarea.finput{min-height:160px;resize:vertical;line-height:1.65;}
 .s-img-grad{width:100%;height:100%;background:linear-gradient(145deg,#160806 0%,#3a1912 50%,#160806 100%);display:flex;align-items:center;justify-content:center;font-family:var(--serif);color:rgba(255,255,255,.12);font-size:1.3rem;}
 .s-text{padding:0 2rem 2rem;}
 .s-prose{font-size:1.04rem;line-height:1.85;color:var(--text2);}
-.s-prose p{margin-bottom:1.4rem;}
+.s-prose p{margin-bottom:1.4rem;} .s-prose p.opening-hook{font-size:1.15rem;font-weight:500;color:var(--text);line-height:1.75;margin-bottom:1.75rem;}
 .s-prose strong{color:var(--text);font-weight:600;}
 .pull-quote{border-left:3px solid var(--accent);padding:.9rem 1.4rem;margin:1.75rem 0;background:var(--accent-light);border-radius:0 var(--radius-xs) var(--radius-xs) 0;}
 .pull-quote p{font-family:var(--serif);font-size:1.18rem;color:var(--text);line-height:1.5;margin:0;font-style:italic;}
@@ -321,11 +321,29 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-const CLOUDINARY_CLOUD = "YOUR_CLOUD_NAME";
-const CLOUDINARY_PRESET = "valor_upload";
-const PIKA_API_KEY = "";
-const ANTHROPIC_KEY = "";
+/* ── CONFIG — fill these in ── */
+const CLOUDINARY_CLOUD = "YOUR_CLOUD_NAME";   // from cloudinary.com dashboard
+const CLOUDINARY_PRESET = "valor_upload";      // unsigned preset name
+const PIKA_API_KEY = "";                       // from pika.art/account
+const ANTHROPIC_KEY = "";                      // from console.anthropic.com
 
+/* ── CATEGORY THEMES ── */
+const THEMES = {
+  "Rescue":         { bg:"#0a1628", accent:"#1a6bb5", light:"#e8f2fb", tag:"#1a6bb5", font:"cold blue" },
+  "Military":       { bg:"#111a0e", accent:"#3a6b2a", light:"#e8f2e4", tag:"#3a6b2a", font:"military green" },
+  "Medical":        { bg:"#0e1a26", accent:"#1a7a9a", light:"#e4f4f8", tag:"#1a7a9a", font:"medical teal" },
+  "Everyday Heroes":{ bg:"#1a1008", accent:"#b5860d", light:"#fdf8ed", tag:"#b5860d", font:"warm gold" },
+  "Youth":          { bg:"#1a0a1a", accent:"#7a3a9a", light:"#f5eefb", tag:"#7a3a9a", font:"purple" },
+  "Community":      { bg:"#0a1a16", accent:"#1a7a5a", light:"#e4f8f2", tag:"#1a7a5a", font:"community green" },
+  "Survival":       { bg:"#1a0e08", accent:"#a0521a", light:"#fdf0e4", tag:"#a0521a", font:"earthy orange" },
+  "default":        { bg:"#160806", accent:"#c0392b", light:"#fdf0ef", tag:"#c0392b", font:"valor red" }
+};
+
+function getTheme(category) {
+  return THEMES[category] || THEMES["default"];
+}
+
+/* ── STATE ── */
 let currentUser = null;
 let currentStoryId = null;
 let selectedVideo = "pika";
@@ -379,11 +397,9 @@ async function doLogin() {
   btn.disabled = true; btn.textContent = "Signing in…";
   try {
     await auth.signInWithEmailAndPassword(email, pw);
-    showToast("Welcome back!");
-    showPage("feed");
-  } catch(e) {
-    showAuthErr(friendlyAuthError(e.code));
-  } finally { btn.disabled = false; btn.textContent = "Sign In"; }
+    showToast("Welcome back!"); showPage("feed");
+  } catch(e) { showAuthErr(friendlyAuthError(e.code)); }
+  finally { btn.disabled = false; btn.textContent = "Sign In"; }
 }
 
 async function doSignup() {
@@ -397,28 +413,24 @@ async function doSignup() {
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, pw);
     await cred.user.updateProfile({ displayName: name });
-    showToast("Welcome to Valor, " + name.split(" ")[0] + "!");
-    showPage("feed");
-  } catch(e) {
-    showAuthErr(friendlyAuthError(e.code));
-  } finally { btn.disabled = false; btn.textContent = "Create Account — Free"; }
+    showToast("Welcome to Valor, " + name.split(" ")[0] + "!"); showPage("feed");
+  } catch(e) { showAuthErr(friendlyAuthError(e.code)); }
+  finally { btn.disabled = false; btn.textContent = "Create Account — Free"; }
 }
 
 async function doSignOut() {
-  await auth.signOut();
-  showToast("Signed out.");
-  showPage("feed");
+  await auth.signOut(); showToast("Signed out."); showPage("feed");
 }
 
 function friendlyAuthError(code) {
   const msgs = {
-    "auth/invalid-email": "Please enter a valid email address.",
-    "auth/user-not-found": "No account found with this email.",
-    "auth/wrong-password": "Incorrect password.",
-    "auth/email-already-in-use": "An account already exists with this email.",
-    "auth/weak-password": "Password must be at least 8 characters.",
-    "auth/too-many-requests": "Too many attempts. Please wait a moment.",
-    "auth/invalid-credential": "Incorrect email or password."
+    "auth/invalid-email":"Please enter a valid email address.",
+    "auth/user-not-found":"No account found with this email.",
+    "auth/wrong-password":"Incorrect password.",
+    "auth/email-already-in-use":"An account already exists with this email.",
+    "auth/weak-password":"Password must be at least 8 characters.",
+    "auth/too-many-requests":"Too many attempts. Please wait a moment.",
+    "auth/invalid-credential":"Incorrect email or password."
   };
   return msgs[code] || "Something went wrong. Please try again.";
 }
@@ -434,7 +446,7 @@ async function loadFeed() {
   if (!container) return;
   container.innerHTML = "<div class=\"feed-loading\">Loading stories…</div>";
   try {
-    const snap = await db.collection("stories").orderBy("createdAt", "desc").get();
+    const snap = await db.collection("stories").orderBy("createdAt","desc").get();
     if (snap.empty) {
       container.innerHTML = "<div class=\"feed-empty\"><h3>No stories yet</h3><p>Be the first to share a bravery story.</p><button class=\"btn-red\" onclick=\"showPage('create')\">Share Your Story</button></div>";
       return;
@@ -447,35 +459,34 @@ async function loadFeed() {
 }
 
 function buildCard(id, s) {
+  const theme = getTheme(s.category);
   const liked = currentUser && s.likes && s.likes.includes(currentUser.uid);
   const likeCount = s.likes ? s.likes.length : 0;
-  const initials = (s.authorName || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0,2);
-  const colors = ["#c0392b","#8b1a10","#b5860d","#1a5fa8","#1a7a4a","#6b2fa0"];
-  const color = colors[(s.authorName || "A").charCodeAt(0) % colors.length];
-  const isRTL = /[֐-׿؀-ۿ]/.test(s.title + (s.excerpt || ""));
-  const rtlStyle = isRTL ? " direction:rtl;text-align:right;" : "";
+  const initials = (s.authorName||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+  const isRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(s.title+(s.excerpt||""));
+  const rtlStyle = isRTL ? "direction:rtl;text-align:right;" : "";
   const div = document.createElement("div");
   div.className = "scard";
   div.innerHTML =
-    "<div class=\"scard-media\" onclick=\"openStory('" + id + "')\">"+
-      (s.imageURLs && s.imageURLs[0] ? "<img class=\"scard-thumb\" src=\""+s.imageURLs[0]+"\" loading=\"lazy\">" : "<div class=\"scard-media-bg\">✦</div>")+
+    "<div class=\"scard-media\" style=\"background:linear-gradient(145deg,"+theme.bg+",#1a0a08);\" onclick=\"openStory('"+id+"')\">"+
+      (s.imageURLs&&s.imageURLs[0] ? "<img class=\"scard-thumb\" src=\""+s.imageURLs[0]+"\" loading=\"lazy\">" : "<div class=\"scard-media-bg\">✦</div>")+
       "<div class=\"play-ring\"><svg viewBox=\"0 0 24 24\"><path d=\"M8 5v14l11-7z\"/></svg></div>"+
-      (s.videoDuration ? "<div class=\"dur-tag\">"+s.videoDuration+"</div>" : "")+
-      "<div class=\"cat-tag\">"+(s.category||"Story")+"</div>"+
+      (s.videoDuration?"<div class=\"dur-tag\">"+s.videoDuration+"</div>":"")+
+      "<div class=\"cat-tag\" style=\"background:"+theme.accent+";\">"+(s.category||"Story")+"</div>"+
     "</div>"+
     "<div class=\"scard-body\">"+
       "<div class=\"scard-author\">"+
-        "<div class=\"av\" style=\"background:"+color+"\">"+initials+"</div>"+
+        "<div class=\"av\" style=\"background:"+theme.accent+"\">"+initials+"</div>"+
         "<div><div class=\"author-name\">"+(s.authorName||"Anonymous")+"</div><div class=\"author-meta\">"+timeAgo(s.createdAt)+" · "+(s.readTime||"3")+" min read</div></div>"+
       "</div>"+
-      "<div class=\"scard-title\" style=\""+rtlStyle+"\" onclick=\"openStory('" + id + "')\">"+s.title+"</div>"+
-      "<div class=\"scard-exc\" style=\""+rtlStyle+"\">"+((s.excerpt||s.body||"").slice(0,140))+"…</div>"+
+      "<div class=\"scard-title\" style=\""+rtlStyle+"\" onclick=\"openStory('"+id+"')\">"+s.title+"</div>"+
+      "<div class=\"scard-exc\" style=\""+rtlStyle+"\">"+(s.excerpt||s.body||"").slice(0,140)+"…</div>"+
       "<div class=\"scard-actions\">"+
-        "<button class=\"scard-act "+(liked?"liked":"")+"\" id=\"like-"+id+"\" onclick=\"toggleLike('" + id + "',this)\">"+
+        "<button class=\"scard-act "+(liked?"liked":"")+"\" id=\"like-"+id+"\" onclick=\"toggleLike('"+id+"',this)\">"+
           "<svg viewBox=\"0 0 24 24\"><path d=\"M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z\" "+(liked?"":"fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"")+"/></svg>"+
           "<span>"+likeCount+"</span></button>"+
-        "<button class=\"scard-act\" onclick=\"openStory('" + id + "')\"><svg viewBox=\"0 0 24 24\"><path d=\"M21 6.5A2.5 2.5 0 0018.5 4h-13A2.5 2.5 0 003 6.5v8A2.5 2.5 0 005.5 17H7v3l4-3h7.5a2.5 2.5 0 002.5-2.5v-8z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg><span>"+(s.commentCount||0)+" comments</span></button>"+
-        "<button class=\"scard-act\" onclick=\"copyLink('" + id + "')\"><svg viewBox=\"0 0 24 24\"><path d=\"M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z\"/></svg>Share</button>"+
+        "<button class=\"scard-act\" onclick=\"openStory('"+id+"')\"><svg viewBox=\"0 0 24 24\"><path d=\"M21 6.5A2.5 2.5 0 0018.5 4h-13A2.5 2.5 0 003 6.5v8A2.5 2.5 0 005.5 17H7v3l4-3h7.5a2.5 2.5 0 002.5-2.5v-8z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg><span>"+(s.commentCount||0)+" comments</span></button>"+
+        "<button class=\"scard-act\" onclick=\"copyLink('"+id+"')\"><svg viewBox=\"0 0 24 24\"><path d=\"M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z\"/></svg>Share</button>"+
       "</div>"+
     "</div>";
   return div;
@@ -494,61 +505,79 @@ async function openStory(id) {
   } catch(e) { showToast("Couldn't load story."); }
 }
 
+/* ── RENDER STORY with full theme ── */
 function renderStory(id, s) {
+  const theme = getTheme(s.category);
   const initials = (s.authorName||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
-  const colors = ["#c0392b","#8b1a10","#b5860d","#1a5fa8","#1a7a4a"];
-  const color = colors[(s.authorName||"A").charCodeAt(0) % colors.length];
   const liked = currentUser && s.likes && s.likes.includes(currentUser.uid);
-  const isRTL = /[֐-׿؀-ۿ]/.test(s.body || s.title || "");
+  const isRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(s.body||s.title||"");
   const rtlAttr = isRTL ? " dir=\"rtl\" style=\"text-align:right;direction:rtl;\"" : "";
 
+  // Apply theme to story page hero
+  const heroStyle = "background:linear-gradient(160deg,"+theme.bg+" 0%,#0a0404 100%);";
+  const accentStyle = "background:"+theme.accent+";";
+  const tagStyle = "background:"+theme.light+";color:"+theme.accent+";";
+
+  // Images grid
   let imagesHTML = "";
   if (s.imageURLs && s.imageURLs.length > 0) {
-    imagesHTML = "<div class=\"s-imgs\">"+
+    imagesHTML = "<div class=\"s-imgs\" style=\"margin:0 2rem 2.5rem;\">"+
       "<div class=\"main-img\"><img src=\""+s.imageURLs[0]+"\" alt=\"\"></div>"+
-      (s.imageURLs[1] ? "<div class=\"s-img-cell\"><img src=\""+s.imageURLs[1]+"\" alt=\"\"></div>" : "<div class=\"s-img-cell\"><div class=\"s-img-grad\">Story moment</div></div>")+
-      (s.imageURLs[2] ? "<div class=\"s-img-cell\"><img src=\""+s.imageURLs[2]+"\" alt=\"\"></div>" : "<div class=\"s-img-cell\"><div class=\"s-img-grad\">Story moment</div></div>")+
+      (s.imageURLs[1]?"<div class=\"s-img-cell\"><img src=\""+s.imageURLs[1]+"\" alt=\"\"></div>":"<div class=\"s-img-cell\"><div class=\"s-img-grad\" style=\""+heroStyle+"\">Story moment</div></div>")+
+      (s.imageURLs[2]?"<div class=\"s-img-cell\"><img src=\""+s.imageURLs[2]+"\" alt=\"\"></div>":"<div class=\"s-img-cell\"><div class=\"s-img-grad\" style=\""+heroStyle+"\">Story moment</div></div>")+
     "</div>";
   }
 
+  // Video block — one-time only, never re-generates
   let videoHTML = "";
   if (s.videoURL) {
-    videoHTML = "<div style=\"margin:0 2rem 2.5rem;border-radius:14px;overflow:hidden;\"><video controls src=\""+s.videoURL+"\" style=\"width:100%;display:block;\"></video></div>";
-  } else if (s.videoPrompt) {
-    const vidId = "vp_" + id;
-    videoHTML = "<div id=\""+vidId+"\" style=\"margin:0 2rem 2.5rem;background:linear-gradient(145deg,#160806,#2d1410);border-radius:14px;padding:2rem 1.5rem;text-align:center;\">"+
-      "<div style=\"width:52px;height:52px;border:3px solid rgba(255,255,255,.15);border-top-color:#c0392b;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;\"></div>"+
+    videoHTML = "<div style=\"margin:0 2rem 2.5rem;border-radius:14px;overflow:hidden;\">"+
+      "<video controls src=\""+s.videoURL+"\" style=\"width:100%;display:block;\"></video></div>";
+  } else if (s.videoGenerating) {
+    // Actively generating right now (set during startGenerate)
+    videoHTML = "<div style=\"margin:0 2rem 2.5rem;"+heroStyle+"border-radius:14px;padding:2rem 1.5rem;text-align:center;\">"+
+      "<div style=\"width:52px;height:52px;border:3px solid rgba(255,255,255,.15);border-top-color:"+theme.accent+";border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;\"></div>"+
       "<div style=\"font-family:'DM Serif Display',serif;font-size:1.2rem;color:white;margin-bottom:.4rem;\">Video is being generated</div>"+
       "<div style=\"font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:1.25rem;\">Processing with "+(s.videoProvider||"Pika Labs")+" — usually 2–5 minutes</div>"+
       "<div style=\"height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;max-width:320px;margin:0 auto .6rem;\">"+
-        "<div id=\"bar_"+id+"\" style=\"height:100%;background:#c0392b;border-radius:2px;width:0;transition:width .6s ease;\"></div>"+
+        "<div id=\"bar_"+id+"\" style=\"height:100%;background:"+theme.accent+";border-radius:2px;width:0;transition:width .6s ease;\"></div>"+
       "</div>"+
       "<div style=\"font-size:.75rem;color:rgba(255,255,255,.35);\">Refresh in a few minutes to see your video</div>"+
     "</div>";
-    setTimeout(() => startVidBar("bar_" + id), 200);
+    setTimeout(() => startVidBar("bar_"+id), 200);
   }
 
+  // Use Claude-edited body if available, else format raw
+  const bodyHTML = s.editedBody || formatBody(s.body, isRTL);
+
   document.getElementById("story-content-area").innerHTML =
-    "<div class=\"story-hdr\">"+
-      "<div class=\"s-cat-tag\">"+(s.category||"Bravery Story")+"</div>"+
-      "<h1 class=\"s-title\""+rtlAttr+">"+s.title+"</h1>"+
-      "<p class=\"s-sub\""+rtlAttr+">"+(s.excerpt||"")+"</p>"+
-      "<div class=\"s-byline\">"+
-        "<div class=\"av\" style=\"background:"+color+";width:42px;height:42px;font-size:.95rem;\">"+initials+"</div>"+
-        "<div><div class=\"author-name\">"+s.authorName+"</div><div class=\"author-meta\">"+timeAgo(s.createdAt)+" · "+(s.readTime||"3")+" min read · "+(s.likes?s.likes.length:0)+" likes</div></div>"+
+    "<div style=\""+heroStyle+"padding:3rem 2rem 2rem;margin-bottom:0;\">"+
+      "<div class=\"s-cat-tag\" style=\""+tagStyle+"\">"+((s.category||"Bravery Story")+" · Bravery Story")+"</div>"+
+      "<h1 class=\"s-title\" style=\"color:white;margin-bottom:.9rem;padding-top:.5rem;\""+rtlAttr+">"+s.title+"</h1>"+
+      "<p class=\"s-sub\" style=\"color:rgba(255,255,255,.6);\""+rtlAttr+">"+(s.excerpt||"")+"</p>"+
+      "<div class=\"s-byline\" style=\"border-bottom-color:rgba(255,255,255,.12);\" >"+
+        "<div class=\"av\" style=\""+accentStyle+"width:42px;height:42px;font-size:.95rem;\">"+initials+"</div>"+
+        "<div><div class=\"author-name\" style=\"color:white;\">"+s.authorName+"</div>"+
+        "<div class=\"author-meta\" style=\"color:rgba(255,255,255,.45);\">"+timeAgo(s.createdAt)+" · "+(s.readTime||"3")+" min read · "+(s.likes?s.likes.length:0)+" likes</div></div>"+
       "</div>"+
-      "<div class=\"s-share\">"+
-        "<button class=\"s-share-btn\" onclick=\"copyLink('" + id + "')\">🔗 Copy link</button>"+
-        "<button class=\"s-share-btn\" id=\"story-like-btn\" onclick=\"toggleLike('" + id + "',this,true)\">"+(liked?"❤️ Liked":"♡ Like")+"</button>"+
+      "<div class=\"s-share\" style=\"padding-bottom:1rem;\">"+
+        "<button class=\"s-share-btn\" style=\"background:rgba(255,255,255,.1);color:white;border-color:rgba(255,255,255,.2);\" onclick=\"copyLink('"+id+"')\" >🔗 Copy link</button>"+
+        "<button class=\"s-share-btn\" style=\"background:rgba(255,255,255,.1);color:white;border-color:rgba(255,255,255,.2);\" id=\"story-like-btn\" onclick=\"toggleLike('"+id+"',this,true)\">"+(liked?"❤️ Liked":"♡ Like")+"</button>"+
       "</div>"+
     "</div>"+
     videoHTML + imagesHTML +
-    "<div class=\"s-text\"><div class=\"s-prose\""+rtlAttr+">"+formatBody(s.body)+"</div></div>";
+    "<div class=\"s-text\"><div class=\"s-prose\""+rtlAttr+">"+bodyHTML+"</div></div>";
+
+  // Apply theme accent color to pull quotes
+  document.querySelectorAll(".pull-quote").forEach(q => {
+    q.style.borderLeftColor = theme.accent;
+    q.style.background = theme.light;
+  });
 }
 
 /* ── LIKES ── */
 async function toggleLike(storyId, btn, isStoryPage) {
-  if (!currentUser) { showModal("Sign in to like stories", "Create a free account to like and save bravery stories."); return; }
+  if (!currentUser) { showModal("Sign in to like stories","Create a free account to like and save stories."); return; }
   const ref = db.collection("stories").doc(storyId);
   const snap = await ref.get();
   if (!snap.exists) return;
@@ -558,9 +587,9 @@ async function toggleLike(storyId, btn, isStoryPage) {
   if (isStoryPage) {
     btn.textContent = liked ? "♡ Like" : "❤️ Liked";
   } else {
-    btn.classList.toggle("liked", !liked);
+    btn.classList.toggle("liked",!liked);
     const span = btn.querySelector("span");
-    if (span) span.textContent = (parseInt(span.textContent)||0) + (liked ? -1 : 1);
+    if (span) span.textContent = (parseInt(span.textContent)||0)+(liked?-1:1);
   }
 }
 
@@ -572,7 +601,7 @@ async function loadComments(storyId) {
   try {
     const snap = await db.collection("stories").doc(storyId).collection("comments").orderBy("createdAt","desc").get();
     const h3 = document.querySelector(".comments h3");
-    if (h3) h3.textContent = snap.size + " comment" + (snap.size !== 1 ? "s" : "");
+    if (h3) h3.textContent = snap.size+" comment"+(snap.size!==1?"s":"");
     snap.forEach(d => {
       const c = d.data();
       const initials = (c.authorName||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
@@ -589,7 +618,7 @@ async function loadComments(storyId) {
 }
 
 async function addComment() {
-  if (!currentUser) { showModal("Sign in to comment", "Create a free account to join the conversation."); return; }
+  if (!currentUser) { showModal("Sign in to comment","Create a free account to join the conversation."); return; }
   const box = document.getElementById("new-cmt");
   const text = box.value.trim();
   if (!text) return;
@@ -597,12 +626,12 @@ async function addComment() {
   btn.disabled = true;
   try {
     await db.collection("stories").doc(currentStoryId).collection("comments").add({
-      text, authorName: currentUser.displayName || currentUser.email.split("@")[0],
+      text, authorName: currentUser.displayName||currentUser.email.split("@")[0],
       authorId: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     const ref = db.collection("stories").doc(currentStoryId);
     const snap = await ref.get();
-    await ref.update({ commentCount: (snap.data().commentCount || 0) + 1 });
+    await ref.update({ commentCount:(snap.data().commentCount||0)+1 });
     box.value = "";
     loadComments(currentStoryId);
     showToast("Comment posted!");
@@ -613,30 +642,29 @@ async function addComment() {
 /* ── PROFILE ── */
 async function loadProfile() {
   if (!currentUser) { showPage("auth"); return; }
-  const name = currentUser.displayName || currentUser.email.split("@")[0];
+  const name = currentUser.displayName||currentUser.email.split("@")[0];
   const initials = name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
   document.getElementById("prof-initials").textContent = initials;
   document.getElementById("prof-name").textContent = name;
   document.getElementById("prof-email").textContent = currentUser.email;
   const snap = await db.collection("stories").orderBy("createdAt","desc").get();
   let myStories = [], totalLikes = 0;
-  snap.forEach(d => { if (d.data().authorId === currentUser.uid) { myStories.push({id:d.id,...d.data()}); totalLikes += (d.data().likes||[]).length; }});
+  snap.forEach(d => { if(d.data().authorId===currentUser.uid){ myStories.push({id:d.id,...d.data()}); totalLikes+=(d.data().likes||[]).length; }});
   document.getElementById("prof-story-count").textContent = myStories.length;
   document.getElementById("prof-likes-count").textContent = totalLikes;
   const grid = document.getElementById("prof-stories-grid");
-  grid.innerHTML = myStories.length === 0 ? "<p style=\"color:var(--text2);font-size:.9rem;\">No stories yet. <span style=\"color:var(--accent);cursor:pointer;\" onclick=\"showPage('create')\">Share your first story →</span></p>" : "";
-  myStories.forEach(s => grid.appendChild(buildCard(s.id, s)));
+  grid.innerHTML = myStories.length===0 ? "<p style=\"color:var(--text2);font-size:.9rem;\">No stories yet. <span style=\"color:var(--accent);cursor:pointer;\" onclick=\"showPage('create')\">Share your first story →</span></p>" : "";
+  myStories.forEach(s => grid.appendChild(buildCard(s.id,s)));
 }
 
-/* ── IMAGE UPLOAD ── */
+/* ── IMAGE UPLOAD (Cloudinary) ── */
 function handleFiles(files) {
   const grid = document.getElementById("img-grid");
   Array.from(files).slice(0,12).forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
       const d = document.createElement("div");
-      d.className = "img-thumb";
-      d._file = file;
+      d.className = "img-thumb"; d._file = file;
       d.innerHTML = "<img src=\""+e.target.result+"\"><button class=\"img-rm\" onclick=\"this.parentNode.remove()\">✕</button>";
       grid.appendChild(d);
     };
@@ -645,7 +673,7 @@ function handleFiles(files) {
 }
 
 async function uploadImagesToCloudinary() {
-  if (CLOUDINARY_CLOUD === "YOUR_CLOUD_NAME") return [];
+  if (CLOUDINARY_CLOUD==="YOUR_CLOUD_NAME") return [];
   const thumbs = document.querySelectorAll(".img-thumb");
   const urls = [];
   for (const thumb of thumbs) {
@@ -654,7 +682,7 @@ async function uploadImagesToCloudinary() {
     fd.append("file", thumb._file);
     fd.append("upload_preset", CLOUDINARY_PRESET);
     try {
-      const res = await fetch("https://api.cloudinary.com/v1_1/"+CLOUDINARY_CLOUD+"/image/upload", {method:"POST",body:fd});
+      const res = await fetch("https://api.cloudinary.com/v1_1/"+CLOUDINARY_CLOUD+"/image/upload",{method:"POST",body:fd});
       const data = await res.json();
       if (data.secure_url) urls.push(data.secure_url);
     } catch(e) {}
@@ -662,64 +690,140 @@ async function uploadImagesToCloudinary() {
   return urls;
 }
 
-async function generateVideoPrompt(title, category, body) {
-  if (!ANTHROPIC_KEY) return "Cinematic documentary: "+title+". "+body.slice(0,100);
+async function uploadVideoToCloudinary(videoBlob) {
+  if (CLOUDINARY_CLOUD==="YOUR_CLOUD_NAME" || !videoBlob) return null;
+  const fd = new FormData();
+  fd.append("file", videoBlob);
+  fd.append("upload_preset", CLOUDINARY_PRESET);
+  fd.append("resource_type", "video");
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
+    const res = await fetch("https://api.cloudinary.com/v1_1/"+CLOUDINARY_CLOUD+"/video/upload",{method:"POST",body:fd});
+    const data = await res.json();
+    return data.secure_url || null;
+  } catch(e) { return null; }
+}
+
+/* ── CLAUDE: EDITORIAL TEXT EDITOR ── */
+async function editStoryWithClaude(title, category, body) {
+  if (!ANTHROPIC_KEY) return null;
+  const isRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(body);
+  const langNote = isRTL ? "The story is in Hebrew. Keep it in Hebrew. Apply RTL formatting." : "";
+  const prompt = "Title: "+title+"\nCategory: "+category+"\n\nStory:\n"+body;
+  const system = `You are Valor's editorial engine. Transform raw bravery stories into beautifully formatted HTML story pages.
+
+Rules:
+- Keep ALL the original facts, names, events — do not invent anything
+- ${langNote}
+- Return ONLY valid HTML, no markdown, no preamble
+- Structure: opening hook paragraph, body paragraphs, 1-2 pull quotes, closing paragraph
+- Use these HTML elements only:
+  <p> for paragraphs
+  <strong> for key moments/names
+  <div class="pull-quote"><p>quote here</p></div> for powerful quotes (max 2)
+  <p class="opening-hook"> for the dramatic first paragraph
+- Pull quotes should be the most powerful sentence in the story
+- Opening hook should grab the reader immediately
+- Each paragraph should be 2-4 sentences
+- Bold the most important moment in each paragraph`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
       headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,
-        system:"You are Valor editorial AI. Transform a bravery story into a precise cinematic video prompt (90-120 words). Vivid imagery, no clichés, documentary style. Output ONLY the prompt.",
-        messages:[{role:"user",content:"Title: "+title+"\nCategory: "+category+"\nStory:\n"+body.slice(0,800)}]})
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:2000,system,messages:[{role:"user",content:prompt}]})
+    });
+    const data = await res.json();
+    return data.content?.[0]?.text || null;
+  } catch(e) { return null; }
+}
+
+/* ── CLAUDE: VIDEO PROMPT ── */
+async function generateVideoPrompt(title, category, body) {
+  if (!ANTHROPIC_KEY) return "Cinematic documentary: "+title+". "+body.slice(0,100);
+  const system = "You are Valor editorial AI. Transform a bravery story into a precise cinematic video prompt (90-120 words). Vivid imagery, no cliches, documentary style. Output ONLY the prompt.";
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,system,messages:[{role:"user",content:"Title: "+title+"\nCategory: "+category+"\nStory: "+body.slice(0,800)}]})
     });
     const data = await res.json();
     return data.content?.[0]?.text || "";
   } catch(e) { return "Cinematic: "+title+". "+body.slice(0,80); }
 }
 
-/* ── CREATE ── */
-function goStep(n) {
-  for (let i=1;i<=4;i++) {
-    document.getElementById("cs"+i).classList.add("hidden");
-    const s = document.getElementById("si"+i);
-    s.classList.remove("on","done");
-    if (i<n) s.classList.add("done");
-    else if (i===n) s.classList.add("on");
-  }
-  document.getElementById("cs"+n).classList.remove("hidden");
-  window.scrollTo(0,0);
+/* ── PIKA: GENERATE VIDEO (once only) ── */
+async function generateAndSaveVideo(storyId, videoPrompt, videoProvider) {
+  if (!PIKA_API_KEY) return null;
+  try {
+    // Call Pika API
+    const res = await fetch("https://api.pika.art/v1/generate",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+PIKA_API_KEY,"Content-Type":"application/json"},
+      body:JSON.stringify({prompt:videoPrompt,duration:90,aspectRatio:"16:9",style:"cinematic"})
+    });
+    const data = await res.json();
+    const videoURL = data.videoUrl || data.url || null;
+    if (!videoURL) return null;
+
+    // Save URL permanently to Firestore — never generates again
+    await db.collection("stories").doc(storyId).update({
+      videoURL, videoGenerating: false,
+      videoDuration: "1:30"
+    });
+    return videoURL;
+  } catch(e) { return null; }
 }
 
+/* ── CREATE: MAIN GENERATE FLOW ── */
 async function startGenerate() {
-  if (!currentUser) { showModal("Sign in to publish", "Create a free account to share your story."); return; }
+  if (!currentUser) { showModal("Sign in to publish","Create a free account to share your story."); return; }
   const title = document.getElementById("s-title").value.trim();
   const body = document.getElementById("s-text").value.trim();
   const category = document.getElementById("s-cat").value;
-  if (!title || !body) { showToast("Please add a title and story first."); return; }
+  if (!title||!body) { showToast("Please add a title and story first."); return; }
+
   goStep(4);
   const fill = document.getElementById("prog-fill");
   const statusEl = document.getElementById("gen-status");
   const pctEl = document.getElementById("prog-pct");
-  const setP = (p, msg) => { fill.style.width=p+"%"; pctEl.textContent=p+"%"; if(msg) statusEl.textContent=msg; };
-  setP(5, "Uploading your images…");
+  const setP = (p,msg) => { fill.style.width=p+"%"; pctEl.textContent=p+"%"; if(msg) statusEl.textContent=msg; };
+
+  setP(5,"Uploading your images…");
   const imageURLs = await uploadImagesToCloudinary();
-  setP(30, "Crafting your video prompt with Claude…");
+
+  setP(20,"Claude is editing and formatting your story…");
+  const editedBody = await editStoryWithClaude(title, category, body);
+
+  setP(40,"Generating your video prompt…");
   const videoPrompt = await generateVideoPrompt(title, category, body);
-  setP(60, "Saving your story…");
+
+  setP(60,"Saving your story…");
   const wordCount = body.split(/\s+/).length;
-  const readTime = Math.max(1, Math.ceil(wordCount/200));
+  const readTime = Math.max(1,Math.ceil(wordCount/200));
+  const excerpt = body.slice(0,160).trim();
+
   try {
     const docRef = await db.collection("stories").add({
-      title, body, excerpt: body.slice(0,160).trim(), category,
+      title, body, editedBody, excerpt, category,
       authorId: currentUser.uid,
-      authorName: currentUser.displayName || currentUser.email.split("@")[0],
-      imageURLs, videoURL: null, videoPrompt,
-      videoProvider: selectedVideo,
-      readTime: readTime+" min", likes: [], commentCount: 0,
+      authorName: currentUser.displayName||currentUser.email.split("@")[0],
+      imageURLs, videoURL: null,
+      videoPrompt, videoProvider: selectedVideo,
+      videoGenerating: !!PIKA_API_KEY,
+      readTime: readTime+" min",
+      likes: [], commentCount: 0,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     currentStoryId = docRef.id;
-    setP(100, "Done!");
+
+    setP(80,"Requesting video generation…");
+    // Fire and forget — saves URL to Firestore when done, never runs again
+    if (PIKA_API_KEY) {
+      generateAndSaveVideo(docRef.id, videoPrompt, selectedVideo);
+    }
+
+    setP(100,"Done!");
     setTimeout(() => {
       document.getElementById("gen-running").classList.add("hidden");
       document.getElementById("gen-done").classList.remove("hidden");
@@ -733,6 +837,10 @@ async function startGenerate() {
 
 function publishStory() {
   showToast("Your story is live on Valor!");
+  document.getElementById("s-title").value = "";
+  document.getElementById("s-text").value = "";
+  document.getElementById("img-grid").innerHTML = "";
+  goStep(1);
   setTimeout(() => openStory(currentStoryId), 900);
 }
 
@@ -741,16 +849,39 @@ function toggleAdv(name) {
   const panel = document.getElementById(name+"-adv");
   const btn = document.getElementById(name+"-toggle");
   panel.classList.toggle("open");
-  btn.classList.toggle("open", panel.classList.contains("open"));
+  btn.classList.toggle("open",panel.classList.contains("open"));
 }
-
-function selectOpt(el, name, val) {
-  if (name === "video") selectedVideo = val;
+function selectOpt(el,name,val) {
+  if (name==="video") selectedVideo=val;
   el.closest(".adv-opts").querySelectorAll(".adv-opt").forEach(o=>o.classList.remove("sel"));
   el.classList.add("sel");
   const keyRow = document.getElementById(name+"-key-row");
-  if (keyRow) keyRow.classList.toggle("show", val !== "valor");
+  if (keyRow) keyRow.classList.toggle("show",val!=="valor");
   showToast(el.querySelector("h5").textContent.replace(/\s*(Free|Paid).*/,"")+" selected");
+}
+
+/* ── STEP NAV ── */
+function goStep(n) {
+  for(let i=1;i<=4;i++) {
+    document.getElementById("cs"+i).classList.add("hidden");
+    const s=document.getElementById("si"+i);
+    s.classList.remove("on","done");
+    if(i<n) s.classList.add("done");
+    else if(i===n) s.classList.add("on");
+  }
+  document.getElementById("cs"+n).classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+/* ── FORMAT BODY (fallback if no Claude key) ── */
+function formatBody(text, isRTL) {
+  if (!text) return "";
+  return text.split("\n\n").map(p => {
+    const t = p.trim(); if(!t) return "";
+    const pRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(t);
+    const dir = pRTL ? " dir=\"rtl\" style=\"text-align:right;direction:rtl;\"" : "";
+    return "<p"+dir+">"+t.replace(/\n/g,"<br>")+"</p>";
+  }).join("");
 }
 
 /* ── UTILS ── */
@@ -759,82 +890,70 @@ function startVidBar(barId) {
   if (!bar) return;
   let pct = 0;
   const iv = setInterval(() => {
-    pct = Math.min(pct + Math.random()*1.2 + 0.3, 92);
-    bar.style.width = pct + "%";
-    if (pct >= 92) clearInterval(iv);
+    pct = Math.min(pct+Math.random()*1.2+0.3, 92);
+    bar.style.width = pct+"%";
+    if (pct>=92) clearInterval(iv);
   }, 800);
-}
-
-function formatBody(text) {
-  if (!text) return "";
-  const isRTL = /[֐-׿؀-ۿ]/.test(text);
-  return text.split("\n\n").map(p => {
-    const t = p.trim(); if (!t) return "";
-    const pRTL = /[֐-׿؀-ۿ]/.test(t);
-    const dir = pRTL ? " dir=\"rtl\" style=\"text-align:right;direction:rtl;\"" : "";
-    return "<p"+dir+">"+t.replace(/\n/g,"<br>")+"</p>";
-  }).join("");
 }
 
 function timeAgo(ts) {
   if (!ts) return "recently";
-  const secs = Math.floor((Date.now() - (ts.seconds||0)*1000)/1000);
-  if (secs < 60) return "just now";
-  if (secs < 3600) return Math.floor(secs/60)+" min ago";
-  if (secs < 86400) return Math.floor(secs/3600)+" hr ago";
-  if (secs < 604800) return Math.floor(secs/86400)+" days ago";
+  const secs = Math.floor((Date.now()-(ts.seconds||0)*1000)/1000);
+  if (secs<60) return "just now";
+  if (secs<3600) return Math.floor(secs/60)+" min ago";
+  if (secs<86400) return Math.floor(secs/3600)+" hr ago";
+  if (secs<604800) return Math.floor(secs/86400)+" days ago";
   return Math.floor(secs/604800)+" weeks ago";
 }
 
 function copyLink(id) {
-  const url = window.location.href.split("?")[0] + "?story=" + id;
-  navigator.clipboard.writeText(url).then(() => showToast("Link copied!")).catch(() => showToast("Link copied!"));
+  const url = window.location.href.split("?")[0]+"?story="+id;
+  navigator.clipboard.writeText(url).then(()=>showToast("Link copied!")).catch(()=>showToast("Link copied!"));
 }
 
 function showToast(msg) {
   const t = document.getElementById("toast");
-  t.textContent = msg; t.classList.add("show");
+  t.textContent=msg; t.classList.add("show");
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove("show"), 2500);
+  t._timer = setTimeout(()=>t.classList.remove("show"),2500);
 }
 
-function showModal(title, body) {
-  document.getElementById("modal-title").textContent = title;
-  document.getElementById("modal-body").textContent = body;
+function showModal(title,body) {
+  document.getElementById("modal-title").textContent=title;
+  document.getElementById("modal-body").textContent=body;
   document.getElementById("modal-bg").classList.add("open");
 }
-
 function closeModal() { document.getElementById("modal-bg").classList.remove("open"); }
 
 /* ── CHAT ── */
-function toggleChat() { chatOpen ? closeChatPanel() : openChatPanel(); }
+function toggleChat() { chatOpen?closeChatPanel():openChatPanel(); }
 function openChatPanel() { chatOpen=true; document.getElementById("chat-panel").classList.add("open"); document.querySelector(".chat-notif").style.display="none"; }
 function closeChatPanel() { chatOpen=false; document.getElementById("chat-panel").classList.remove("open"); }
 function sendChat() {
-  const inp = document.getElementById("chat-inp");
-  const msg = inp.value.trim(); if(!msg) return;
-  const list = document.getElementById("chat-msgs");
-  const d = document.createElement("div");
-  d.innerHTML = "<div class=\"cmsg me\">"+msg+"</div>";
+  const inp=document.getElementById("chat-inp");
+  const msg=inp.value.trim(); if(!msg) return;
+  const list=document.getElementById("chat-msgs");
+  const d=document.createElement("div");
+  d.innerHTML="<div class=\"cmsg me\">"+msg+"</div>";
   list.appendChild(d); list.scrollTop=list.scrollHeight; inp.value="";
-  const replies = ["So inspiring!","Thank you ❤️","This community is incredible.","Welcome!"];
-  setTimeout(() => {
-    const r = document.createElement("div");
-    r.innerHTML = "<div class=\"cmsg-name\">Community</div><div class=\"cmsg them\">"+replies[Math.floor(Math.random()*replies.length)]+"</div>";
+  const replies=["So inspiring!","Thank you ❤️","This community is incredible.","Welcome!"];
+  setTimeout(()=>{
+    const r=document.createElement("div");
+    r.innerHTML="<div class=\"cmsg-name\">Community</div><div class=\"cmsg them\">"+replies[Math.floor(Math.random()*replies.length)]+"</div>";
     list.appendChild(r); list.scrollTop=list.scrollHeight;
-  }, 900);
+  },900);
 }
 
-/* ── CHIPS ── */
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".chip").forEach(c => {
-    c.addEventListener("click", () => {
+/* ── INIT ── */
+document.addEventListener("DOMContentLoaded",()=>{
+  document.querySelectorAll(".chip").forEach(c=>{
+    c.addEventListener("click",()=>{
       document.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
       c.classList.add("on");
     });
   });
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get("story")) setTimeout(() => openStory(urlParams.get("story")), 800);
+  const urlParams=new URLSearchParams(window.location.search);
+  if (urlParams.get("story")) setTimeout(()=>openStory(urlParams.get("story")),800);
 });
 </script>
 
