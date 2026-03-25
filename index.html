@@ -221,7 +221,7 @@ textarea.finput{min-height:160px;resize:vertical;line-height:1.65;}
 .s-img-cell{border-radius:var(--radius-sm);overflow:hidden;height:150px;background:var(--bg3);}
 .s-img-cell img,.s-imgs .main-img img{width:100%;height:100%;object-fit:cover;}
 .s-img-grad{width:100%;height:100%;background:linear-gradient(145deg,#160806 0%,#3a1912 50%,#160806 100%);display:flex;align-items:center;justify-content:center;font-family:var(--serif);color:rgba(255,255,255,.12);font-size:1.3rem;}
-.s-text{padding:0 2rem 2rem;}
+.s-text{padding:0 2rem 2rem;background:white;}.story-page-body{background:white;}
 .s-prose{font-size:1.04rem;line-height:1.85;color:var(--text2);}
 .s-prose p{margin-bottom:1.4rem;} .s-prose p.opening-hook{font-size:1.15rem;font-weight:500;color:var(--text);line-height:1.75;margin-bottom:1.75rem;}
 .s-prose strong{color:var(--text);font-weight:600;}
@@ -518,13 +518,18 @@ function renderStory(id, s) {
   const accentStyle = "background:"+theme.accent+";";
   const tagStyle = "background:"+theme.light+";color:"+theme.accent+";";
 
-  // Images grid
+  // Images grid — only show cells that have real images
   let imagesHTML = "";
-  if (s.imageURLs && s.imageURLs.length > 0) {
-    imagesHTML = "<div class=\"s-imgs\" style=\"margin:0 2rem 2.5rem;\">"+
-      "<div class=\"main-img\"><img src=\""+s.imageURLs[0]+"\" alt=\"\"></div>"+
-      (s.imageURLs[1]?"<div class=\"s-img-cell\"><img src=\""+s.imageURLs[1]+"\" alt=\"\"></div>":"<div class=\"s-img-cell\"><div class=\"s-img-grad\" style=\""+heroStyle+"\">Story moment</div></div>")+
-      (s.imageURLs[2]?"<div class=\"s-img-cell\"><img src=\""+s.imageURLs[2]+"\" alt=\"\"></div>":"<div class=\"s-img-cell\"><div class=\"s-img-grad\" style=\""+heroStyle+"\">Story moment</div></div>")+
+  const imgs = (s.imageURLs||[]).filter(u=>u&&u.startsWith("http"));
+  if (imgs.length > 0) {
+    let cells = "";
+    imgs.forEach((url,i) => {
+      if (i===0) return; // main image handled separately
+      cells += "<div class=\"s-img-cell\"><img src=\""+url+"\" alt=\"\"></div>";
+    });
+    imagesHTML = "<div class=\"s-imgs\" style=\"margin:0 2rem 2.5rem;grid-template-columns:"+(imgs.length>1?"1fr 1fr":"1fr")+";\">"+
+      "<div class=\"main-img\" style=\"grid-column:1/-1;\"><img src=\""+imgs[0]+"\" alt=\"\"></div>"+
+      cells+
     "</div>";
   }
 
@@ -534,7 +539,6 @@ function renderStory(id, s) {
     videoHTML = "<div style=\"margin:0 2rem 2.5rem;border-radius:14px;overflow:hidden;\">"+
       "<video controls src=\""+s.videoURL+"\" style=\"width:100%;display:block;\"></video></div>";
   } else if (s.videoGenerating) {
-    // Actively generating right now (set during startGenerate)
     videoHTML = "<div style=\"margin:0 2rem 2.5rem;"+heroStyle+"border-radius:14px;padding:2rem 1.5rem;text-align:center;\">"+
       "<div style=\"width:52px;height:52px;border:3px solid rgba(255,255,255,.15);border-top-color:"+theme.accent+";border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;\"></div>"+
       "<div style=\"font-family:'DM Serif Display',serif;font-size:1.2rem;color:white;margin-bottom:.4rem;\">Video is being generated</div>"+
@@ -546,6 +550,7 @@ function renderStory(id, s) {
     "</div>";
     setTimeout(() => startVidBar("bar_"+id), 200);
   }
+  // No videoURL and not generating = show nothing. Clean.
 
   // Use Claude-edited body if available, else format raw
   const bodyHTML = s.editedBody || formatBody(s.body, isRTL);
@@ -566,7 +571,7 @@ function renderStory(id, s) {
       "</div>"+
     "</div>"+
     videoHTML + imagesHTML +
-    "<div class=\"s-text\"><div class=\"s-prose\""+rtlAttr+">"+bodyHTML+"</div></div>";
+    "<div class=\"s-text\" style=\"background:white;border-radius:0 0 var(--radius) var(--radius);\"><div class=\"s-prose\""+rtlAttr+">"+bodyHTML+"</div></div>";
 
   // Apply theme accent color to pull quotes
   document.querySelectorAll(".pull-quote").forEach(q => {
@@ -873,14 +878,27 @@ function goStep(n) {
   window.scrollTo(0,0);
 }
 
-/* ── FORMAT BODY (fallback if no Claude key) ── */
+/* ── FORMAT BODY — editorial formatting without Claude ── */
 function formatBody(text, isRTL) {
   if (!text) return "";
-  return text.split("\n\n").map(p => {
-    const t = p.trim(); if(!t) return "";
-    const pRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(t);
-    const dir = pRTL ? " dir=\"rtl\" style=\"text-align:right;direction:rtl;\"" : "";
-    return "<p"+dir+">"+t.replace(/\n/g,"<br>")+"</p>";
+  const paragraphs = text.split(/\n\n|\r\n\r\n/).map(p=>p.trim()).filter(p=>p.length>0);
+  return paragraphs.map((p, i) => {
+    const pRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(p);
+    const dir = pRTL ? ' dir="rtl" style="text-align:right;direction:rtl;"' : "";
+    const cleaned = p.replace(/\n/g," ");
+    if (i===0) return '<p class="opening-hook"'+dir+'>'+cleaned+'</p>';
+    const sentences = cleaned.match(/[^.!?]+[.!?]+/g)||[];
+    if (i%3===2 && sentences.length>=2) {
+      const longest = sentences.reduce((a,b)=>b.length>a.length?b:a,"");
+      const rest = cleaned.replace(longest,"").trim();
+      return (rest?"<p"+dir+">"+rest+"</p>":"")+'<div class="pull-quote"><p>'+longest.trim()+'</p></div>';
+    }
+    if (i===1||i===Math.floor(paragraphs.length/2)) {
+      const words = cleaned.split(" ");
+      const bc = Math.min(4,Math.floor(words.length*0.3)||1);
+      return "<p"+dir+"><strong>"+words.slice(0,bc).join(" ")+"</strong> "+words.slice(bc).join(" ")+"</p>";
+    }
+    return "<p"+dir+">"+cleaned+"</p>";
   }).join("");
 }
 
