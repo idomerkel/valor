@@ -775,7 +775,7 @@ async function updateStory(id) {
 
 function confirmDeleteStory(id, title) {
   document.getElementById("modal-title").textContent = "Delete story?";
-  document.getElementById("modal-body").textContent = """+title+"" will be permanently deleted. This cannot be undone.";
+  document.getElementById("modal-body").textContent = "\""+title+"\" will be permanently deleted. This cannot be undone.";
   document.getElementById("modal-ok").textContent = "Delete";
   document.getElementById("modal-ok").style.background = "#c0392b";
   document.getElementById("modal-ok").onclick = () => deleteStory(id);
