@@ -532,7 +532,9 @@ function buildCard(id, s) {
   div.innerHTML =
     "<div class=\"scard-media\" style=\"background:linear-gradient(145deg,"+theme.bg+",#1a0a08);\" onclick=\"openStory('"+id+"')\">"+
       (s.imageURLs&&s.imageURLs[0] ? "<img class=\"scard-thumb\" src=\""+s.imageURLs[0]+"\" loading=\"lazy\">" : "<div class=\"scard-media-bg\">\u2736</div>")+
-      "<div class=\"play-ring\"><svg viewBox=\"0 0 24 24\"><path d=\"M8 5v14l11-7z\"/></svg></div>"+
+      (s.videoURL
+        ? "<div class=\"play-ring\"><svg viewBox=\"0 0 24 24\"><path d=\"M8 5v14l11-7z\"/></svg></div>"
+        : "<div class=\"play-ring\" style=\"background:rgba(255,255,255,.82);\"><svg viewBox=\"0 0 24 24\" style=\"margin-left:0;\"><path d=\"M9 18l6-6-6-6\" fill=\"none\" stroke=\"var(--accent)\" stroke-width=\"2.5\" stroke-linecap=\"round\"/></svg></div>")+
       (s.videoDuration?"<div class=\"dur-tag\">"+s.videoDuration+"</div>":"")+
       "<div class=\"cat-tag\" style=\"background:"+theme.accent+";\">"+(s.category||"Story")+"</div>"+
     "</div>"+
@@ -541,8 +543,8 @@ function buildCard(id, s) {
         "<div class=\"av\" style=\"background:"+theme.accent+"\">"+initials+"</div>"+
         "<div><div class=\"author-name\">"+(s.authorName||"Anonymous")+"</div><div class=\"author-meta\">"+timeAgo(s.createdAt)+" \u00b7 "+(s.readTime||"3")+" min read</div></div>"+
       "</div>"+
-      "<div class=\"scard-title\" style=\""+rtlStyle+"\" onclick=\"openStory('"+id+"')\">"+s.title+"</div>"+
-      "<div class=\"scard-exc\" style=\""+rtlStyle+"\">"+(s.excerpt||s.body||"").slice(0,140)+"\u2026</div>"+
+      "<div class=\"scard-title\" style=\""+rtlStyle+"\" onclick=\"openStory('"+id+"')\">"+escHTML(s.title)+"</div>"+
+      "<div class=\"scard-exc\" style=\""+rtlStyle+"\">"+escHTML((s.excerpt||s.body||"").slice(0,140))+"\u2026</div>"+ 
       "<div class=\"scard-actions\">"+
         "<button class=\"scard-act "+(liked?"liked":"")+"\" id=\"like-"+id+"\" onclick=\"toggleLike('"+id+"',this)\">"+
           "<svg viewBox=\"0 0 24 24\"><path d=\"M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z\" "+(liked?"":"fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"")+"/></svg>"+
@@ -555,7 +557,11 @@ function buildCard(id, s) {
 }
 
 function escAttr(str) {
-  return (str||"").replace(/'/g,"").replace(/"/g,"");
+  return (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+function escHTML(str) {
+  return (str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
 /* ── OPEN STORY ── */
@@ -689,8 +695,8 @@ function renderStory(id, s) {
         "<div class=\"sp-category-pill\" style=\"background:"+theme.pillBg+";color:"+theme.pillColor+";border:1px solid "+theme.pillColor+"33;\">"+
           (s.category||"Bravery Story")+
         "</div>"+
-        "<h1 class=\"sp-title\""+rtlAttr+">"+s.title+"</h1>"+
-        (s.excerpt?"<p class=\"sp-subtitle\""+rtlAttr+">"+s.excerpt+"</p>":"")+
+        "<h1 class=\"sp-title\""+rtlAttr+">"+escHTML(s.title)+"</h1>"+
+        (s.excerpt?"<p class=\"sp-subtitle\""+rtlAttr+">"+escHTML(s.excerpt)+"</p>":"")+
         "<div class=\"sp-byline-row\">"+
           "<div class=\"sp-av\" style=\"background:"+theme.accent+";\">"+initials+"</div>"+
           "<div>"+
@@ -710,7 +716,8 @@ function renderStory(id, s) {
     "<div class=\"sp-body\" id=\"sp-body-"+id+"\">"+
       videoHTML+
       "<div class=\"sp-prose-wrap\"><div class=\"sp-prose\""+rtlAttr+">"+bodyHTML+"</div></div>"+
-      (imgs.length>0 ? mosaicHTML : "<div id=\"auto-imgs-"+id+"\"></div>")+
+      (imgs.length>0 ? mosaicHTML : "")+
+      "<div id=\"auto-imgs-"+id+"\"></div>"+
       "<div class=\"sp-share-strip\">"+
         "<span class=\"sp-share-label\">Share</span>"+
         "<button class=\"sp-share-btn wa\" onclick=\"window.open('"+waURL+"','_blank')\">WhatsApp</button>"+
@@ -719,56 +726,54 @@ function renderStory(id, s) {
       "</div>"+
     "</div>";
 
-  /* Auto-fetch images from Unsplash if no user images */
-  if (imgs.length === 0 && UNSPLASH_ENABLED) {
-    autoFetchImages(id, s.title, s.category, s.body||"");
+  /* Always auto-fetch Unsplash images to supplement the story */
+  if (UNSPLASH_ENABLED) {
+    autoFetchImages(id, s.title, s.category, imgs.length);
   }
 }
 
 /* ── AUTO-FETCH IMAGES FROM UNSPLASH ── */
-async function autoFetchImages(storyId, title, category, body) {
+async function autoFetchImages(storyId, title, category, existingCount) {
   const container = document.getElementById("auto-imgs-"+storyId);
   if (!container) return;
 
-  /* Build search query from title + category keywords */
   const catKeywords = {
-    "Rescue": "rescue hero emergency",
-    "Military": "military soldier service",
-    "Medical": "medical hospital doctor",
-    "Everyday Heroes": "community people helping",
-    "Youth": "young person courage",
-    "Community": "community neighborhood people",
-    "Survival": "nature survival wilderness",
-    "default": "courage hero bravery"
+    "Rescue":"rescue emergency hero firefighter",
+    "Military":"military soldier service veteran",
+    "Medical":"medical hospital doctor nurse",
+    "Everyday Heroes":"community helping kindness",
+    "Youth":"young person determination courage",
+    "Community":"community neighborhood together",
+    "Survival":"nature survival wilderness endurance",
+    "default":"courage hero bravery strength"
   };
   const baseKw = catKeywords[category] || catKeywords["default"];
-  /* Use first 3 meaningful words from title */
-  const titleWords = title.replace(/[^a-zA-Z\u0590-\u05FF\s]/g,"").split(/\s+/).slice(0,3).join(" ");
-  const query = encodeURIComponent(titleWords + " " + baseKw);
+  const titleWords = title.replace(/[\u0590-\u05FF\u0600-\u06FF]/g,"").replace(/[^a-zA-Z\s]/g,"").split(/\s+/).filter(w=>w.length>2).slice(0,3).join(" ");
+  const query = encodeURIComponent((titleWords||baseKw.split(" ")[0]) + " " + baseKw);
+  const label = existingCount > 0 ? "More related imagery" : "Related imagery";
 
-  /* Unsplash source API — no key needed, returns random relevant image */
-  const w = 800, h = 500;
-  const imgs = [
-    "https://source.unsplash.com/"+w+"x"+h+"/?"+query+"&sig=1",
-    "https://source.unsplash.com/"+w+"x"+h+"/?"+query+"&sig=2",
-    "https://source.unsplash.com/"+w+"x"+h+"/?"+query+"&sig=3",
-    "https://source.unsplash.com/400x400/?"+query+"&sig=4",
-    "https://source.unsplash.com/400x400/?"+query+"&sig=5"
+  /* Use different sig values so each URL is a different image */
+  const unsplashImgs = [
+    "https://source.unsplash.com/800x500/?"+query+"&sig=10",
+    "https://source.unsplash.com/800x500/?"+query+"&sig=20",
+    "https://source.unsplash.com/800x500/?"+query+"&sig=30",
+    "https://source.unsplash.com/400x400/?"+query+"&sig=40",
+    "https://source.unsplash.com/400x400/?"+query+"&sig=50"
   ];
 
   container.innerHTML =
     "<div class=\"sp-mosaic\">"+
-      "<div style=\"font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.75rem;\">Related imagery</div>"+
+      "<div style=\"font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.75rem;\">"+label+"</div>"+
       "<div class=\"sp-mosaic-3\">"+
-        "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[0]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.parentNode.style.display='none'\"></div>"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+unsplashImgs[0]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
         "<div class=\"sp-mosaic-col\">"+
-          "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[1]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.parentNode.style.display='none'\"></div>"+
-          "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[2]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.parentNode.style.display='none'\"></div>"+
+          "<div class=\"sp-mosaic-cell\"><img src=\""+unsplashImgs[1]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
+          "<div class=\"sp-mosaic-cell\"><img src=\""+unsplashImgs[2]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
         "</div>"+
       "</div>"+
       "<div class=\"sp-mosaic-2\" style=\"margin-top:10px;\">"+
-        "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[3]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.parentNode.style.display='none'\"></div>"+
-        "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[4]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.parentNode.style.display='none'\"></div>"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+unsplashImgs[3]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+unsplashImgs[4]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
       "</div>"+
       "<div class=\"sp-img-caption\">Images sourced from Unsplash</div>"+
     "</div>";
@@ -893,9 +898,16 @@ async function loadProfile() {
     const card = buildCard(s.id, s);
     const manageBar = document.createElement("div");
     manageBar.className = "story-manage-bar";
-    manageBar.innerHTML =
-      "<button class=\"story-manage-btn\" onclick=\"editStory('"+s.id+"')\">Edit</button>"+
-      "<button class=\"story-manage-btn del\" onclick=\"confirmDeleteStory('"+s.id+"','"+escAttr(s.title)+"')\">Delete</button>";
+    const editBtn = document.createElement("button");
+    editBtn.className = "story-manage-btn";
+    editBtn.textContent = "Edit";
+    editBtn.onclick = () => editStory(s.id);
+    const delBtn = document.createElement("button");
+    delBtn.className = "story-manage-btn del";
+    delBtn.textContent = "Delete";
+    delBtn.onclick = () => confirmDeleteStory(s.id, s.title);
+    manageBar.appendChild(editBtn);
+    manageBar.appendChild(delBtn);
     card.appendChild(manageBar);
     grid.appendChild(card);
   });
