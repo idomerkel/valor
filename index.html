@@ -259,6 +259,11 @@ textarea.finput{min-height:160px;resize:vertical;line-height:1.65;}
 .prof-acts{display:flex;gap:8px;margin-top:1.1rem;}
 .btn-follow{padding:8px 18px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:.875rem;font-weight:500;cursor:pointer;}
 .btn-msg{padding:8px 18px;background:white;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:.875rem;font-weight:500;cursor:pointer;}
+.story-manage-bar{display:flex;gap:6px;padding:.6rem 1.4rem;border-top:1px solid var(--border);background:var(--bg2);}
+.story-manage-btn{padding:5px 12px;border-radius:6px;font-size:.75rem;font-weight:500;cursor:pointer;border:1px solid var(--border);background:white;color:var(--text2);transition:var(--tr);}
+.story-manage-btn:hover{background:var(--bg3);}
+.story-manage-btn.del{color:var(--accent);border-color:var(--accent-light);}
+.story-manage-btn.del:hover{background:var(--accent-light);}
 
 /* CHAT */
 .chat-fab{position:fixed;bottom:1.75rem;right:1.75rem;z-index:300;width:50px;height:50px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(192,57,43,.38);display:flex;align-items:center;justify-content:center;transition:transform .15s;}
@@ -652,6 +657,16 @@ async function loadProfile() {
   document.getElementById("prof-initials").textContent = initials;
   document.getElementById("prof-name").textContent = name;
   document.getElementById("prof-email").textContent = currentUser.email;
+  document.getElementById("edit-name").value = name;
+
+  // Load bio from Firestore user profile
+  try {
+    const userDoc = await db.collection("users").doc(currentUser.uid).get();
+    const bio = userDoc.exists ? (userDoc.data().bio||"") : "";
+    document.getElementById("prof-bio-display").textContent = bio;
+    document.getElementById("edit-bio").value = bio;
+  } catch(e) {}
+
   const snap = await db.collection("stories").orderBy("createdAt","desc").get();
   let myStories = [], totalLikes = 0;
   snap.forEach(d => { if(d.data().authorId===currentUser.uid){ myStories.push({id:d.id,...d.data()}); totalLikes+=(d.data().likes||[]).length; }});
@@ -659,7 +674,162 @@ async function loadProfile() {
   document.getElementById("prof-likes-count").textContent = totalLikes;
   const grid = document.getElementById("prof-stories-grid");
   grid.innerHTML = myStories.length===0 ? "<p style=\"color:var(--text2);font-size:.9rem;\">No stories yet. <span style=\"color:var(--accent);cursor:pointer;\" onclick=\"showPage('create')\">Share your first story →</span></p>" : "";
-  myStories.forEach(s => grid.appendChild(buildCard(s.id,s)));
+  myStories.forEach(s => {
+    const card = buildCard(s.id, s);
+    // Add manage bar to each story card
+    const manageBar = document.createElement("div");
+    manageBar.className = "story-manage-bar";
+    manageBar.innerHTML =
+      "<button class=\"story-manage-btn\" onclick=\"editStory('"+s.id+"')\" >✏️ Edit</button>"+
+      "<button class=\"story-manage-btn del\" onclick=\"confirmDeleteStory('"+s.id+"','"+s.title.replace(/'/g,"")+"')\" >🗑 Delete</button>";
+    card.appendChild(manageBar);
+    grid.appendChild(card);
+  });
+}
+
+function toggleEditProfile() {
+  const view = document.getElementById("prof-view-mode");
+  const edit = document.getElementById("prof-edit-mode");
+  const isEditing = edit.style.display !== "none";
+  view.style.display = isEditing ? "" : "none";
+  edit.style.display = isEditing ? "none" : "";
+}
+
+async function saveProfile() {
+  if (!currentUser) return;
+  const name = document.getElementById("edit-name").value.trim();
+  const bio = document.getElementById("edit-bio").value.trim();
+  const pw = document.getElementById("edit-pw").value;
+  if (!name) { showToast("Name cannot be empty."); return; }
+  try {
+    await currentUser.updateProfile({ displayName: name });
+    await db.collection("users").doc(currentUser.uid).set({ bio, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    if (pw && pw.length >= 8) {
+      await currentUser.updatePassword(pw);
+      showToast("Profile and password updated!");
+    } else if (pw && pw.length < 8) {
+      showToast("Password must be at least 8 characters.");
+      return;
+    } else {
+      showToast("Profile saved!");
+    }
+    document.getElementById("prof-name").textContent = name;
+    document.getElementById("prof-bio-display").textContent = bio;
+    toggleEditProfile();
+  } catch(e) {
+    if (e.code === "auth/requires-recent-login") {
+      showToast("Please sign out and sign back in to change your password.");
+    } else {
+      showToast("Couldn't save profile. Please try again.");
+    }
+  }
+}
+
+function editStory(id) {
+  showToast("Opening story editor…");
+  // Pre-fill create form with existing story data
+  db.collection("stories").doc(id).get().then(snap => {
+    if (!snap.exists) return;
+    const s = snap.data();
+    document.getElementById("s-title").value = s.title||"";
+    document.getElementById("s-text").value = s.body||"";
+    document.getElementById("s-cat").value = s.category||"Rescue";
+    currentStoryId = id;
+    showPage("create");
+    goStep(1);
+    // Change button to "Update Story"
+    document.getElementById("gen-btn-main").textContent = "Update My Story →";
+    document.getElementById("gen-btn-main").onclick = () => updateStory(id);
+  });
+}
+
+async function updateStory(id) {
+  const title = document.getElementById("s-title").value.trim();
+  const body = document.getElementById("s-text").value.trim();
+  const category = document.getElementById("s-cat").value;
+  if (!title||!body) { showToast("Please add a title and story."); return; }
+  goStep(4);
+  const fill=document.getElementById("prog-fill");
+  const setP=(p,msg)=>{fill.style.width=p+"%";document.getElementById("prog-pct").textContent=p+"%";if(msg)document.getElementById("gen-status").textContent=msg;};
+  setP(20,"Re-editing story with Claude…");
+  const editedBody = await editStoryWithClaude(title, category, body);
+  setP(70,"Saving changes…");
+  try {
+    await db.collection("stories").doc(id).update({
+      title, body, editedBody, category,
+      excerpt: body.slice(0,160).trim(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    setP(100,"Updated!");
+    setTimeout(()=>{
+      document.getElementById("gen-running").classList.add("hidden");
+      document.getElementById("gen-done").classList.remove("hidden");
+      document.getElementById("gen-done").querySelector("h3").textContent = "Story updated!";
+      document.getElementById("gen-done").querySelector("p").textContent = "Your changes have been saved.";
+    },500);
+    // Reset button back to normal
+    document.getElementById("gen-btn-main").textContent = "Generate My Video Story →";
+    document.getElementById("gen-btn-main").onclick = startGenerate;
+  } catch(e) { showToast("Couldn't update story."); goStep(3); }
+}
+
+function confirmDeleteStory(id, title) {
+  document.getElementById("modal-title").textContent = "Delete story?";
+  document.getElementById("modal-body").textContent = """+title+"" will be permanently deleted. This cannot be undone.";
+  document.getElementById("modal-ok").textContent = "Delete";
+  document.getElementById("modal-ok").style.background = "#c0392b";
+  document.getElementById("modal-ok").onclick = () => deleteStory(id);
+  document.getElementById("modal-cancel").onclick = () => { closeModal(); resetModal(); };
+  document.getElementById("modal-bg").classList.add("open");
+}
+
+async function deleteStory(id) {
+  closeModal(); resetModal();
+  try {
+    await db.collection("stories").doc(id).delete();
+    showToast("Story deleted.");
+    loadProfile();
+  } catch(e) { showToast("Couldn't delete story."); }
+}
+
+function confirmDeleteAccount() {
+  document.getElementById("modal-title").textContent = "Delete your account?";
+  document.getElementById("modal-body").textContent = "All your stories and data will be permanently deleted. This cannot be undone.";
+  document.getElementById("modal-ok").textContent = "Delete Account";
+  document.getElementById("modal-ok").style.background = "#c0392b";
+  document.getElementById("modal-ok").onclick = deleteAccount;
+  document.getElementById("modal-cancel").onclick = () => { closeModal(); resetModal(); };
+  document.getElementById("modal-bg").classList.add("open");
+}
+
+async function deleteAccount() {
+  closeModal(); resetModal();
+  try {
+    // Delete all user stories
+    const snap = await db.collection("stories").where("authorId","==",currentUser.uid).get();
+    const batch = db.batch();
+    snap.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    // Delete user profile doc
+    await db.collection("users").doc(currentUser.uid).delete();
+    // Delete auth account
+    await currentUser.delete();
+    showToast("Account deleted.");
+    showPage("feed");
+  } catch(e) {
+    if (e.code==="auth/requires-recent-login") {
+      showToast("Please sign out and sign back in first, then delete.");
+    } else {
+      showToast("Couldn't delete account. Please try again.");
+    }
+  }
+}
+
+function resetModal() {
+  document.getElementById("modal-ok").textContent = "Sign In / Sign Up";
+  document.getElementById("modal-ok").style.background = "";
+  document.getElementById("modal-ok").onclick = ()=>{closeModal();showPage("auth");};
+  document.getElementById("modal-cancel").onclick = closeModal;
 }
 
 /* ── IMAGE UPLOAD (Cloudinary) ── */
@@ -1140,7 +1310,7 @@ document.addEventListener("DOMContentLoaded",()=>{
       </div>
       <div style="display:flex;gap:10px;margin-top:1.25rem;">
         <button class="back-btn" onclick="goStep(2)">← Back</button>
-        <button class="gen-btn" onclick="startGenerate()">Generate My Video Story →</button>
+        <button class="gen-btn" id="gen-btn-main" onclick="startGenerate()">Generate My Video Story →</button>
       </div>
     </div>
 
@@ -1184,19 +1354,47 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 <!-- PROFILE PAGE -->
 <div class="page" id="page-profile">
-  <div class="prof-banner"></div>
+  <div class="prof-banner" id="prof-banner"></div>
   <div class="prof-body">
     <div class="prof-av-wrap"><span id="prof-initials">?</span></div>
     <div class="prof-meta">
-      <div class="prof-name" id="prof-name">Loading…</div>
-      <div class="prof-bio" id="prof-email" style="color:var(--text3);font-size:.82rem;"></div>
-      <div class="prof-stats">
-        <div><div class="stat-n" id="prof-story-count">0</div><div class="stat-l">Stories</div></div>
-        <div><div class="stat-n" id="prof-likes-count">0</div><div class="stat-l">Likes received</div></div>
+      <!-- VIEW MODE -->
+      <div id="prof-view-mode">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div class="prof-name" id="prof-name">Loading…</div>
+          <button onclick="toggleEditProfile()" style="padding:4px 12px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;background:white;cursor:pointer;color:var(--text2);">✏️ Edit Profile</button>
+        </div>
+        <div id="prof-bio-display" style="color:var(--text2);font-size:.875rem;margin-top:.4rem;line-height:1.5;"></div>
+        <div style="color:var(--text3);font-size:.78rem;margin-top:.3rem;" id="prof-email"></div>
+        <div class="prof-stats">
+          <div><div class="stat-n" id="prof-story-count">0</div><div class="stat-l">Stories</div></div>
+          <div><div class="stat-n" id="prof-likes-count">0</div><div class="stat-l">Likes received</div></div>
+        </div>
+        <div class="prof-acts">
+          <button class="btn-follow" onclick="showPage('create')">+ New Story</button>
+          <button class="btn-msg" onclick="doSignOut()">Sign Out</button>
+          <button class="btn-msg" style="color:var(--accent);border-color:var(--accent-light);" onclick="confirmDeleteAccount()">Delete Account</button>
+        </div>
       </div>
-      <div class="prof-acts">
-        <button class="btn-msg" onclick="showPage('create')">+ New Story</button>
-        <button class="btn-msg" onclick="doSignOut()">Sign Out</button>
+      <!-- EDIT MODE -->
+      <div id="prof-edit-mode" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-top:1rem;max-width:480px;">
+        <div style="font-family:var(--serif);font-size:1.1rem;margin-bottom:1.25rem;">Edit Profile</div>
+        <div class="field" style="margin-bottom:1rem;">
+          <label style="font-size:.75rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:6px;">Display Name</label>
+          <input type="text" id="edit-name" class="finput" placeholder="Your name">
+        </div>
+        <div class="field" style="margin-bottom:1rem;">
+          <label style="font-size:.75rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:6px;">Bio</label>
+          <textarea id="edit-bio" class="finput" style="min-height:80px;" placeholder="Tell the community about yourself…"></textarea>
+        </div>
+        <div class="field" style="margin-bottom:1.25rem;">
+          <label style="font-size:.75rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:6px;">New Password <span style="font-weight:400;text-transform:none;">(leave blank to keep current)</span></label>
+          <input type="password" id="edit-pw" class="finput" placeholder="Min 8 characters">
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="saveProfile()" style="padding:9px 20px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:.875rem;font-weight:500;cursor:pointer;">Save Changes</button>
+          <button onclick="toggleEditProfile()" style="padding:9px 20px;background:white;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:.875rem;cursor:pointer;">Cancel</button>
+        </div>
       </div>
     </div>
     <div style="margin-top:2rem;">
