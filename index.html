@@ -480,8 +480,8 @@ function buildCard(id, s) {
         <div class="av" style="background:${color};">${initials}</div>
         <div><div class="author-name">${s.authorName || "Anonymous"}</div><div class="author-meta">${timeAgo(s.createdAt)} · ${s.readTime || "3"} min read</div></div>
       </div>
-      <div class="scard-title" onclick="openStory('${id}")" ${/[֐-׿؀-ۿ]/.test(s.title) ? "dir="rtl" style="text-align:right;direction:rtl;"" : ""}>${s.title}</div>
-      <div class="scard-exc" ${/[֐-׿؀-ۿ]/.test(s.excerpt||s.body||".") ? "dir="rtl" style="text-align:right;direction:rtl;"" : ""}>${(s.excerpt || s.body || "").slice(0,140)}…</div>
+      <div class="scard-title" onclick="openStory('${id}')">${s.title}</div>
+      <div class="scard-exc">${(s.excerpt || s.body || "").slice(0,140)}…</div>
       <div class="scard-actions">
         <button class="scard-act ${liked ? "liked" : ""}" id="like-${id}" onclick="toggleLike('${id}',this)">
           <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" ${liked ? "" : 'fill="none" stroke="currentColor" stroke-width="1.5"'}/></svg>
@@ -566,7 +566,7 @@ function renderStory(id, s) {
     </div>
     ${videoHTML}
     ${imagesHTML}
-    <div class="s-text"><div class="s-prose">${formatBody(s.body)}</div></div>`;
+    <div class="s-text"><div class="s-prose"${rtlAttr}>${formatBody(s.body)}</div></div>`;
 }
 
 function formatBody(text) {
@@ -575,7 +575,7 @@ function formatBody(text) {
   return text.split("\n\n").map(p => {
     const t = p.trim(); if(!t) return "";
     const pRTL = /[֐-׿؀-ۿ]/.test(t);
-    const dir = pRTL ? " dir="rtl" style="text-align:right;direction:rtl;"" : "";
+    const dir = pRTL ? ' dir="rtl" style="text-align:right;direction:rtl;"' : '';
     return `<p${dir}>${t.replace(/\n/g,"<br>")}</p>`;
   }).join("");
 }
