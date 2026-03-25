@@ -370,9 +370,57 @@ const db = firebase.firestore();
 const CLOUDINARY_CLOUD = "dezy82ghg";
 const CLOUDINARY_PRESET = "valor_upload";
 const PIKA_API_KEY = "";
-const ANTHROPIC_KEY = "";
 /* Unsplash — free, no key needed for source.unsplash.com */
 const UNSPLASH_ENABLED = true;
+
+/* ── GEMINI: USER API KEY MANAGEMENT ── */
+function getGeminiKey() {
+  return localStorage.getItem("valor_gemini_key") || "";
+}
+
+function saveGeminiKey() {
+  const el = document.getElementById("gemini-key-input");
+  if (!el) return;
+  const key = el.value.trim();
+  if (key) {
+    localStorage.setItem("valor_gemini_key", key);
+    showToast("Gemini API Key saved locally!");
+  } else {
+    localStorage.removeItem("valor_gemini_key");
+  }
+}
+
+/* ── GEMINI HELPER — single function for all AI calls ── */
+async function callGemini(prompt, maxTokens) {
+  const userKey = getGeminiKey();
+  if (!userKey) {
+    console.warn("No Gemini key provided by user.");
+    return null;
+  }
+  
+  try {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + userKey,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: maxTokens || 1000, temperature: 0.7 }
+        })
+      }
+    );
+    const data = await res.json();
+    if (data.error) { console.warn("Gemini error:", data.error.message); return null; }
+    return data.candidates &&
+           data.candidates[0] &&
+           data.candidates[0].content &&
+           data.candidates[0].content.parts &&
+           data.candidates[0].content.parts[0].text
+           ? data.candidates[0].content.parts[0].text.trim()
+           : null;
+  } catch(e) { console.warn("callGemini failed:", e); return null; }
+}
 
 /* ── CATEGORY THEMES ── */
 const THEMES = {
@@ -385,7 +433,6 @@ const THEMES = {
   "Survival":       { bg:"#1a0e08", accent:"#a0521a", light:"#fdf0e4", tag:"#a0521a", overlay:"rgba(26,14,8,.85)", pillBg:"rgba(160,82,26,.25)", pillColor:"#e89a5a" },
   "default":        { bg:"#160806", accent:"#c0392b", light:"#fdf0ef", tag:"#c0392b", overlay:"rgba(22,8,6,.82)", pillBg:"rgba(192,57,43,.25)", pillColor:"#e88070" }
 };
-
 function getTheme(category) {
   return THEMES[category] || THEMES["default"];
 }
@@ -466,7 +513,8 @@ async function doSignup() {
 }
 
 async function doSignOut() {
-  await auth.signOut(); showToast("Signed out."); showPage("feed");
+  await auth.signOut();
+  showToast("Signed out."); showPage("feed");
 }
 
 function friendlyAuthError(code) {
@@ -578,60 +626,104 @@ async function openStory(id) {
 }
 
 /* ══════════════════════════════════════════════════════
-   RENDER STORY — Magazine-quality AI-powered layout
+   AI STORY THEME — Gemini reads story, returns design brief
    ══════════════════════════════════════════════════════ */
-function renderStory(id, s) {
-  const theme = getTheme(s.category);
+async function getStoryTheme(storyId, title, category, body) {
+  try {
+    const snap = await db.collection("stories").doc(storyId).get();
+    if (snap.exists && snap.data().aiTheme) return snap.data().aiTheme;
+  } catch(e) {}
+  const fallback = buildFallbackTheme(category, title);
+  if (!getGeminiKey()) return fallback;
+  const prompt = "You are a visual design AI for Valor, a bravery stories platform.\nReturn ONLY a valid JSON object, no markdown, no explanation, no code fences:\n{\"bg\":\"#hex dark bg\",\"accent\":\"#hex accent\",\"overlay\":\"rgba(...)\",\"pillBg\":\"rgba(...)\",\"pillColor\":\"#hex\",\"light\":\"#hex light tint\",\"mood\":\"2-3 word mood\",\"imageQueries\":[\"query1\",\"query2\",\"query3\",\"query4\",\"query5\"]}\nRules: bg must be very dark. Colors match story mood. imageQueries must be 5 specific Unsplash English search strings from the ACTUAL story content — real places, equipment, emotions. 2-5 words each. Very specific, not generic.\nExample for tanks/Lebanon/soldiers: [\"Israeli Merkava tank\",\"Lebanon border military\",\"soldiers sleeping field\",\"armored vehicle dust\",\"night patrol soldiers\"]\n\nTitle: "+title+"\nCategory: "+category+"\n\nStory:\n"+body.slice(0,1200);
+  try {
+    const raw = await callGemini(prompt, 400);
+    if (!raw) return fallback;
+    const cleaned = raw.replace(/^```json\s*/i,"").replace(/^```\s*/i,"").replace(/```\s*$/,"").trim();
+    const theme = JSON.parse(cleaned);
+    if (theme.bg && theme.accent && Array.isArray(theme.imageQueries) && theme.imageQueries.length>0) {
+      try { await db.collection("stories").doc(storyId).update({aiTheme:theme}); } catch(_) {}
+      return theme;
+    }
+    return fallback;
+  } catch(e) { return fallback; }
+}
+
+function buildFallbackTheme(category, title) {
+  const t = getTheme(category);
+  const catTerms = {
+    "Rescue":["rescue operation","firefighter emergency","first responder hero","rescue team action","emergency response"],
+    "Military":["military soldier field","army combat patrol","soldiers in action","military operation","armored vehicle"],
+    "Medical":["medical emergency hospital","doctor saving life","nurse patient care","surgery team","medical hero"],
+    "Everyday Heroes":["community hero helping","act of kindness","civilian courage","helping stranger","everyday bravery"],
+    "Youth":["young person courage","teen bravery act","youth determination","student hero","child rescue"],
+    "Community":["community together helping","neighborhood support","volunteer service","people united","community bravery"],
+    "Survival":["survival wilderness nature","extreme endurance","mountain survival","nature danger","survivor story"],
+    "default":["courage bravery action","hero act strength","determination courage","brave person","human courage"]
+  };
+  const queries = (catTerms[category]||catTerms["default"]).slice();
+  const tw = title.replace(/[\u0590-\u05FF\u0600-\u06FF]/g,"").replace(/[^a-zA-Z\s]/g,"").split(/\s+/).filter(w=>w.length>3).slice(0,2).join(" ");
+  if (tw) queries[0] = tw+" "+(catTerms[category]||catTerms["default"])[0].split(" ")[0];
+  return {bg:t.bg,accent:t.accent,overlay:t.overlay,pillBg:t.pillBg,pillColor:t.pillColor,light:t.light,mood:category,imageQueries:queries};
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER STORY — AI-themed magazine layout (async)
+   ══════════════════════════════════════════════════════ */
+async function renderStory(id, s) {
+  const skeletonBg = getTheme(s.category).bg;
+  document.getElementById("story-content-area").innerHTML =
+    "<div style=\"min-height:70vh;background:"+skeletonBg+";display:flex;align-items:center;justify-content:center;\">"+
+      "<div style=\"text-align:center;\">"+
+        "<div style=\"width:40px;height:40px;border:3px solid rgba(255,255,255,.1);border-top-color:rgba(255,255,255,.5);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;\"></div>"+
+        "<div style=\"color:rgba(255,255,255,.4);font-size:.85rem;\">Designing your story page\u2026</div>"+
+      "</div>"+
+    "</div>";
+  const theme = await getStoryTheme(id, s.title, s.category, s.body||"");
+
   const initials = (s.authorName||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
   const liked = currentUser && s.likes && s.likes.includes(currentUser.uid);
   const isRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(s.body||s.title||"");
-  const rtlAttr = isRTL ? " dir=\"rtl\" style=\"text-align:right;direction:rtl;\"" : "";
-  const imgs = (s.imageURLs||[]).filter(u => u && u.startsWith("http"));
+  const rtlAttr = isRTL?" dir=\"rtl\" style=\"text-align:right;direction:rtl;\"":"";
+  const imgs = (s.imageURLs||[]).filter(u=>u&&u.startsWith("http"));
 
-  /* Hero background — use first image if available, else gradient */
   const heroBg = imgs[0]
-    ? "background-image:url('" + imgs[0] + "');"
-    : "background:" + theme.bg + ";";
+    ? "background-image:url('"+imgs[0]+"');background-size:cover;background-position:center;"
+    : "background:"+theme.bg+";";
 
-  /* Image mosaic block */
   let mosaicHTML = "";
-  if (imgs.length === 1) {
+  if (imgs.length===1) {
     mosaicHTML = "<div class=\"sp-mosaic\"><div class=\"sp-mosaic-1\"><img src=\""+imgs[0]+"\" alt=\"\"></div></div>";
-  } else if (imgs.length === 2) {
+  } else if (imgs.length===2) {
     mosaicHTML = "<div class=\"sp-mosaic\"><div class=\"sp-mosaic-2\">"+
       "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[0]+"\" alt=\"\"></div>"+
       "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[1]+"\" alt=\"\"></div>"+
     "</div></div>";
-  } else if (imgs.length >= 3) {
-    const extras = imgs.slice(2).map(u => "<div class=\"sp-mosaic-cell\"><img src=\""+u+"\" alt=\"\"></div>").join("");
+  } else if (imgs.length>=3) {
+    const extras = imgs.slice(3).map(u=>"<div class=\"sp-mosaic-cell\"><img src=\""+u+"\" alt=\"\"></div>").join("");
     mosaicHTML = "<div class=\"sp-mosaic\"><div class=\"sp-mosaic-3\">"+
       "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[0]+"\" alt=\"\"></div>"+
       "<div class=\"sp-mosaic-col\">"+
         "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[1]+"\" alt=\"\"></div>"+
         "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[2]+"\" alt=\"\"></div>"+
       "</div>"+
-    "</div>"+
-    (imgs.length>3 ? "<div class=\"sp-mosaic-2\" style=\"margin-top:10px;\">"+extras+"</div>" : "")+
+    "</div>"+(extras?"<div class=\"sp-mosaic-2\" style=\"margin-top:10px;\">"+extras+"</div>":"")+
     "</div>";
   }
 
-  /* Video block — always shown */
   let videoHTML = "";
   if (s.videoURL) {
-    /* Real video — play it */
     videoHTML =
       "<div class=\"sp-video-block\">"+
         "<div class=\"sp-video-wrap\" style=\"background:#060606;\">"+
-          "<video id=\"story-video-"+id+"\" controls playsinline preload=\"metadata\" style=\"width:100%;height:100%;display:block;object-fit:contain;\">"+
+          "<video controls playsinline preload=\"metadata\" style=\"width:100%;height:100%;display:block;object-fit:contain;\">"+
             "<source src=\""+s.videoURL+"\" type=\"video/mp4\">"+
             "<source src=\""+s.videoURL+"\" type=\"video/webm\">"+
-            "Your browser does not support this video."+
           "</video>"+
         "</div>"+
         "<div class=\"sp-video-label\">AI-generated video"+(s.videoDuration?" \u00b7 "+s.videoDuration:"")+"</div>"+
       "</div>";
   } else if (s.videoGenerating) {
-    /* Actively generating — show progress */
     videoHTML =
       "<div class=\"sp-video-block\">"+
         "<div class=\"sp-video-wrap\" style=\"background:"+theme.bg+";\">"+
@@ -640,17 +732,14 @@ function renderStory(id, s) {
               "<div style=\"position:absolute;inset:-3px;border:3px solid transparent;border-top-color:"+theme.accent+";border-radius:50%;animation:spin .9s linear infinite;\"></div>"+
             "</div>"+
             "<div class=\"sp-vid-title\">Video generating\u2026</div>"+
-            "<div class=\"sp-vid-sub\">Processing with "+(s.videoProvider||"Pika Labs")+" \u00b7 usually 2\u20135 min</div>"+
-            "<div class=\"sp-vid-bar-wrap\">"+
-              "<div class=\"sp-vid-bar-fill\" id=\"vbar_"+id+"\" style=\"background:"+theme.accent+";\"></div>"+
-            "</div>"+
-            "<div class=\"sp-vid-note\">Refresh in a few minutes to see your video</div>"+
+            "<div class=\"sp-vid-sub\">Usually 2\u20135 minutes</div>"+
+            "<div class=\"sp-vid-bar-wrap\"><div class=\"sp-vid-bar-fill\" id=\"vbar_"+id+"\" style=\"background:"+theme.accent+";\"></div></div>"+
+            "<div class=\"sp-vid-note\">Refresh to check progress</div>"+
           "</div>"+
         "</div>"+
       "</div>";
-    setTimeout(() => startVidBar("vbar_"+id), 300);
-  } else if (PIKA_API_KEY && currentUser && s.authorId === (currentUser && currentUser.uid)) {
-    /* Story owner + Pika key available — show generate button */
+    setTimeout(()=>startVidBar("vbar_"+id),300);
+  } else if (PIKA_API_KEY && currentUser && s.authorId===currentUser.uid) {
     videoHTML =
       "<div class=\"sp-video-block\">"+
         "<div class=\"sp-video-wrap\" style=\"background:"+theme.bg+";cursor:pointer;\" onclick=\"triggerVideoGeneration('"+id+"')\">"+
@@ -660,63 +749,42 @@ function renderStory(id, s) {
             "</div>"+
             "<div class=\"sp-vid-title\">Generate AI video</div>"+
             "<div class=\"sp-vid-sub\">Click to create a cinematic video for this story</div>"+
-            "<div style=\"margin-top:1rem;padding:8px 20px;background:"+theme.accent+";border:none;border-radius:100px;font-size:.82rem;font-weight:600;color:white;display:inline-block;\">Generate now</div>"+
-          "</div>"+
-        "</div>"+
-      "</div>";
-  } else {
-    /* No video, no key, or not owner — show atmospheric placeholder */
-    videoHTML =
-      "<div class=\"sp-video-block\">"+
-        "<div class=\"sp-video-wrap\" style=\"background:linear-gradient(145deg,"+theme.bg+",#0a0404);\">"+
-          "<div class=\"sp-video-generating\">"+
-            "<div style=\"font-size:2.5rem;margin-bottom:.75rem;opacity:.4;\">&#x1F3AC;</div>"+
-            "<div class=\"sp-vid-title\" style=\"opacity:.7;\">Video coming soon</div>"+
-            "<div class=\"sp-vid-sub\">AI-generated video will appear here</div>"+
           "</div>"+
         "</div>"+
       "</div>";
   }
 
-  /* Prose body */
-  const bodyHTML = s.editedBody || formatBody(s.body||"", isRTL, theme);
-
-  /* Story URL for sharing */
-  const storyURL = window.location.href.split("?")[0] + "?story=" + id;
-  const waURL = "https://wa.me/?text=" + encodeURIComponent(s.title + " " + storyURL);
-  const twURL = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(s.title) + "&url=" + encodeURIComponent(storyURL);
+  const bodyHTML = s.editedBody||formatBody(s.body||"",isRTL,theme);
+  const storyURL = window.location.href.split("?")[0]+"?story="+id;
+  const waURL = "[https://wa.me/?text=](https://wa.me/?text=)"+encodeURIComponent(s.title+" "+storyURL);
+  const twURL = "[https://twitter.com/intent/tweet?text=](https://twitter.com/intent/tweet?text=)"+encodeURIComponent(s.title)+"&url="+encodeURIComponent(storyURL);
+  const moodLabel = theme.mood||s.category||"Bravery Story";
 
   document.getElementById("story-content-area").innerHTML =
-    /* HERO */
     "<div class=\"sp-hero\">"+
       "<div class=\"sp-hero-bg\" style=\""+heroBg+"\"></div>"+
-      "<div class=\"sp-hero-overlay\" style=\"background:linear-gradient(to bottom,rgba(0,0,0,.15) 0%,"+theme.overlay+" 60%,"+theme.bg+" 100%);\"></div>"+
+      "<div class=\"sp-hero-overlay\" style=\"background:linear-gradient(to bottom,rgba(0,0,0,.1) 0%,"+(theme.overlay||"rgba(0,0,0,.78)")+" 55%,"+theme.bg+" 100%);\"></div>"+
       "<div class=\"sp-hero-content\">"+
-        "<div class=\"sp-category-pill\" style=\"background:"+theme.pillBg+";color:"+theme.pillColor+";border:1px solid "+theme.pillColor+"33;\">"+
-          (s.category||"Bravery Story")+
-        "</div>"+
+        "<div class=\"sp-category-pill\" style=\"background:"+(theme.pillBg||"rgba(255,255,255,.15)")+";color:"+(theme.pillColor||"#fff")+";border:1px solid "+(theme.pillColor||"rgba(255,255,255,.3)")+"44;\">"+escHTML(moodLabel)+"</div>"+
         "<h1 class=\"sp-title\""+rtlAttr+">"+escHTML(s.title)+"</h1>"+
         (s.excerpt?"<p class=\"sp-subtitle\""+rtlAttr+">"+escHTML(s.excerpt)+"</p>":"")+
         "<div class=\"sp-byline-row\">"+
           "<div class=\"sp-av\" style=\"background:"+theme.accent+";\">"+initials+"</div>"+
           "<div>"+
-            "<div class=\"sp-author-name\">"+(s.authorName||"Anonymous")+"</div>"+
+            "<div class=\"sp-author-name\">"+escHTML(s.authorName||"Anonymous")+"</div>"+
             "<div class=\"sp-author-meta\">"+timeAgo(s.createdAt)+" \u00b7 "+(s.readTime||"3")+" min read \u00b7 "+(s.likes?s.likes.length:0)+" likes</div>"+
           "</div>"+
           "<div class=\"sp-actions\">"+
-            "<button class=\"sp-action-btn "+(liked?"liked":"")+"\" id=\"story-like-btn\" onclick=\"toggleLike('"+id+"',this,true)\">"+
-              (liked?"\u2764\uFE0F Liked":"\u2661 Like")+
-            "</button>"+
+            "<button class=\"sp-action-btn "+(liked?"liked":"")+"\" id=\"story-like-btn\" onclick=\"toggleLike('"+id+"',this,true)\">"+(liked?"\u2764\uFE0F Liked":"\u2661 Like")+"</button>"+
             "<button class=\"sp-action-btn\" onclick=\"copyLink('"+id+"')\">Copy link</button>"+
           "</div>"+
         "</div>"+
       "</div>"+
     "</div>"+
-    /* BODY */
     "<div class=\"sp-body\" id=\"sp-body-"+id+"\">"+
       videoHTML+
       "<div class=\"sp-prose-wrap\"><div class=\"sp-prose\""+rtlAttr+">"+bodyHTML+"</div></div>"+
-      (imgs.length>0 ? mosaicHTML : "")+
+      (imgs.length>0?mosaicHTML:"")+
       "<div id=\"auto-imgs-"+id+"\"></div>"+
       "<div class=\"sp-share-strip\">"+
         "<span class=\"sp-share-label\">Share</span>"+
@@ -726,56 +794,47 @@ function renderStory(id, s) {
       "</div>"+
     "</div>";
 
-  /* Always auto-fetch Unsplash images to supplement the story */
-  if (UNSPLASH_ENABLED) {
-    autoFetchImages(id, s.title, s.category, imgs.length);
-  }
+  document.querySelectorAll(".sp-pullquote").forEach(q=>{
+    q.style.background = theme.light||"#f5f0e8";
+    q.style.borderLeftColor = theme.accent;
+    const bq = q.querySelector("blockquote");
+    if (bq) bq.style.color = theme.bg;
+  });
+  autoFetchImages(id, theme.imageQueries||[], imgs.length, theme.accent);
 }
 
-/* ── AUTO-FETCH IMAGES FROM UNSPLASH ── */
-async function autoFetchImages(storyId, title, category, existingCount) {
+/* ── AUTO-FETCH IMAGES — uses AI-generated queries ── */
+async function autoFetchImages(storyId, imageQueries, existingCount, accent) {
   const container = document.getElementById("auto-imgs-"+storyId);
   if (!container) return;
-
-  const catKeywords = {
-    "Rescue":"rescue emergency hero firefighter",
-    "Military":"military soldier service veteran",
-    "Medical":"medical hospital doctor nurse",
-    "Everyday Heroes":"community helping kindness",
-    "Youth":"young person determination courage",
-    "Community":"community neighborhood together",
-    "Survival":"nature survival wilderness endurance",
-    "default":"courage hero bravery strength"
-  };
-  const baseKw = catKeywords[category] || catKeywords["default"];
-  const titleWords = title.replace(/[\u0590-\u05FF\u0600-\u06FF]/g,"").replace(/[^a-zA-Z\s]/g,"").split(/\s+/).filter(w=>w.length>2).slice(0,3).join(" ");
-  const query = encodeURIComponent((titleWords||baseKw.split(" ")[0]) + " " + baseKw);
-  const label = existingCount > 0 ? "More related imagery" : "Related imagery";
-
-  /* Use different sig values so each URL is a different image */
-  const unsplashImgs = [
-    "https://source.unsplash.com/800x500/?"+query+"&sig=10",
-    "https://source.unsplash.com/800x500/?"+query+"&sig=20",
-    "https://source.unsplash.com/800x500/?"+query+"&sig=30",
-    "https://source.unsplash.com/400x400/?"+query+"&sig=40",
-    "https://source.unsplash.com/400x400/?"+query+"&sig=50"
+  const queries = Array.isArray(imageQueries)&&imageQueries.length>0 ? imageQueries : ["bravery courage","hero action","strength determination","courage story","brave moment"];
+  const accentColor = accent||"var(--accent)";
+  const slots = [
+    {q:queries[0]||queries[0],w:800,h:500,sig:101},
+    {q:queries[1]||queries[0],w:800,h:500,sig:202},
+    {q:queries[2]||queries[0],w:800,h:500,sig:303},
+    {q:queries[3]||queries[1]||queries[0],w:400,h:400,sig:404},
+    {q:queries[4]||queries[1]||queries[0],w:400,h:400,sig:505}
   ];
-
+  const urls = slots.map(s=>"[https://source.unsplash.com/](https://source.unsplash.com/)"+s.w+"x"+s.h+"/?"+encodeURIComponent(s.q)+"&sig="+s.sig);
   container.innerHTML =
     "<div class=\"sp-mosaic\">"+
-      "<div style=\"font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.75rem;\">"+label+"</div>"+
+      "<div style=\"font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:8px;\">"+
+        "<span style=\"width:8px;height:8px;border-radius:50%;background:"+accentColor+";display:inline-block;\"></span>"+
+        (existingCount>0?"More imagery":"Story imagery")+
+      "</div>"+
       "<div class=\"sp-mosaic-3\">"+
-        "<div class=\"sp-mosaic-cell\"><img src=\""+unsplashImgs[0]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+urls[0]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
         "<div class=\"sp-mosaic-col\">"+
-          "<div class=\"sp-mosaic-cell\"><img src=\""+unsplashImgs[1]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
-          "<div class=\"sp-mosaic-cell\"><img src=\""+unsplashImgs[2]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
+          "<div class=\"sp-mosaic-cell\"><img src=\""+urls[1]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
+          "<div class=\"sp-mosaic-cell\"><img src=\""+urls[2]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
         "</div>"+
       "</div>"+
       "<div class=\"sp-mosaic-2\" style=\"margin-top:10px;\">"+
-        "<div class=\"sp-mosaic-cell\"><img src=\""+unsplashImgs[3]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
-        "<div class=\"sp-mosaic-cell\"><img src=\""+unsplashImgs[4]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+urls[3]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+urls[4]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.closest('.sp-mosaic-cell').style.display='none'\"></div>"+
       "</div>"+
-      "<div class=\"sp-img-caption\">Images sourced from Unsplash</div>"+
+      "<div class=\"sp-img-caption\">Contextual imagery from Unsplash</div>"+
     "</div>";
 }
 
@@ -934,7 +993,8 @@ async function saveProfile() {
       await currentUser.updatePassword(pw);
       showToast("Profile and password updated!");
     } else if (pw && pw.length < 8) {
-      showToast("Password must be at least 8 characters."); return;
+      showToast("Password must be at least 8 characters.");
+      return;
     } else {
       showToast("Profile saved!");
     }
@@ -973,8 +1033,8 @@ async function updateStory(id) {
   goStep(4);
   const fill=document.getElementById("prog-fill");
   const setP=(p,msg)=>{fill.style.width=p+"%";document.getElementById("prog-pct").textContent=p+"%";if(msg)document.getElementById("gen-status").textContent=msg;};
-  setP(20,"Re-editing story with Claude\u2026");
-  const editedBody = await editStoryWithClaude(title, category, body);
+  setP(20,"Re-editing story with Gemini\u2026");
+  const editedBody = await editStoryWithGemini(title, category, body);
   setP(70,"Saving changes\u2026");
   try {
     await db.collection("stories").doc(id).update({
@@ -1075,7 +1135,7 @@ async function uploadImagesToCloudinary() {
     fd.append("file", thumb._file);
     fd.append("upload_preset", CLOUDINARY_PRESET);
     try {
-      const res = await fetch("https://api.cloudinary.com/v1_1/"+CLOUDINARY_CLOUD+"/image/upload",{method:"POST",body:fd});
+      const res = await fetch("[https://api.cloudinary.com/v1_1/](https://api.cloudinary.com/v1_1/)"+CLOUDINARY_CLOUD+"/image/upload",{method:"POST",body:fd});
       const data = await res.json();
       if (data.secure_url) urls.push(data.secure_url);
     } catch(e) {}
@@ -1083,35 +1143,26 @@ async function uploadImagesToCloudinary() {
   return urls;
 }
 
-/* ── CLAUDE: EDITORIAL TEXT EDITOR ── */
-async function editStoryWithClaude(title, category, body) {
-  if (!ANTHROPIC_KEY) return null;
+/* ── GEMINI: EDITORIAL TEXT EDITOR ── */
+async function editStoryWithGemini(title, category, body) {
+  if (!getGeminiKey()) return null;
   const isRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(body);
   const langNote = isRTL ? "The story is in Hebrew. Keep it in Hebrew." : "";
-  const system = "You are Valor's editorial engine. Transform raw bravery stories into beautifully formatted HTML. " + langNote + "\nReturn ONLY valid HTML. Structure: opening hook paragraph (<p class=\"hook\">), body paragraphs, 1-2 pull quotes, closing paragraph.\nHTML elements allowed: <p>, <strong>, <em>, <div class=\"sp-pullquote\"><blockquote>quote</blockquote></div>\nPull quotes must be the most powerful sentence. Opening hook grabs reader immediately. Bold the most important moment per paragraph. No preamble, no markdown.";
+  const prompt = "You are Valor's editorial engine. Transform this raw bravery story into beautifully formatted HTML.\n"+langNote+"\nReturn ONLY valid HTML, no preamble, no markdown, no code fences.\nStructure: opening hook paragraph (<p class=\"hook\">), body paragraphs, 1-2 pull quotes, closing paragraph.\nAllowed HTML: <p>, <strong>, <em>, <div class=\"sp-pullquote\"><blockquote>quote</blockquote></div>\nPull quotes = most powerful sentence. Opening hook grabs reader immediately. Bold key moments.\n\nTitle: "+title+"\nCategory: "+category+"\n\nStory:\n"+body;
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:2000,system,messages:[{role:"user",content:"Title: "+title+"\nCategory: "+category+"\n\nStory:\n"+body}]})
-    });
-    const data = await res.json();
-    return data.content&&data.content[0]&&data.content[0].text ? data.content[0].text : null;
+    const result = await callGemini(prompt, 2000);
+    if (!result) return null;
+    return result.replace(/^```html\s*/i,"").replace(/^```\s*/i,"").replace(/```\s*$/,"").trim();
   } catch(e) { return null; }
 }
 
-/* ── CLAUDE: VIDEO PROMPT ── */
+/* ── GEMINI: VIDEO PROMPT ── */
 async function generateVideoPrompt(title, category, body) {
-  if (!ANTHROPIC_KEY) return "Cinematic documentary: " + title + ". " + body.slice(0,100);
-  const system = "You are Valor editorial AI. Write a cinematic video prompt (90-120 words) for a bravery story. Vivid imagery, no cliches, documentary style. Output ONLY the prompt text, nothing else.";
+  if (!getGeminiKey()) return "Cinematic documentary: " + title + ". " + body.slice(0,100);
+  const prompt = "Write a cinematic video prompt (90-120 words) for this bravery story. Vivid imagery, no cliches, documentary style. Output ONLY the prompt text, nothing else.\n\nTitle: "+title+"\nCategory: "+category+"\nStory: "+body.slice(0,800);
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,system,messages:[{role:"user",content:"Title: "+title+"\nCategory: "+category+"\nStory: "+body.slice(0,800)}]})
-    });
-    const data = await res.json();
-    return data.content&&data.content[0]&&data.content[0].text ? data.content[0].text : "";
+    const result = await callGemini(prompt, 200);
+    return result || ("Cinematic: "+title+". "+body.slice(0,80));
   } catch(e) { return "Cinematic: "+title+". "+body.slice(0,80); }
 }
 
@@ -1120,7 +1171,6 @@ async function generateVideoPrompt(title, category, body) {
    ══════════════════════════════════════════════════════ */
 async function generateAndSaveVideo(storyId, videoPrompt) {
   if (!PIKA_API_KEY) return;
-
   try {
     /* Step 1: Submit generation request */
     const submitRes = await fetch("https://api.pika.art/v2/generate", {
@@ -1140,7 +1190,6 @@ async function generateAndSaveVideo(storyId, videoPrompt) {
         }
       })
     });
-
     if (!submitRes.ok) {
       console.warn("Pika submit failed:", submitRes.status);
       await db.collection("stories").doc(storyId).update({ videoGenerating: false });
@@ -1159,21 +1208,17 @@ async function generateAndSaveVideo(storyId, videoPrompt) {
     const maxAttempts = 40;
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       await sleep(15000);
-
       try {
         const pollRes = await fetch("https://api.pika.art/v2/tasks/" + taskId, {
           headers: { "Authorization": "Bearer " + PIKA_API_KEY }
         });
-
         if (!pollRes.ok) continue;
         const pollData = await pollRes.json();
         const status = (pollData.status || "").toLowerCase();
-
         if (status === "completed" || status === "succeeded" || status === "finished") {
           const videoURL = pollData.video && (pollData.video.url || pollData.video.resultUrl)
             ? (pollData.video.url || pollData.video.resultUrl)
             : (pollData.resultUrl || pollData.url || null);
-
           if (videoURL) {
             await db.collection("stories").doc(storyId).update({
               videoURL: videoURL,
@@ -1197,10 +1242,10 @@ async function generateAndSaveVideo(storyId, videoPrompt) {
 
     /* Timed out */
     await db.collection("stories").doc(storyId).update({ videoGenerating: false });
-
   } catch(e) {
     console.warn("generateAndSaveVideo error:", e);
-    try { await db.collection("stories").doc(storyId).update({ videoGenerating: false }); } catch(_) {}
+    try { await db.collection("stories").doc(storyId).update({ videoGenerating: false });
+    } catch(_) {}
   }
 }
 
@@ -1219,17 +1264,15 @@ async function startGenerate() {
   const statusEl = document.getElementById("gen-status");
   const pctEl = document.getElementById("prog-pct");
   const setP = (p,msg) => { fill.style.width=p+"%"; pctEl.textContent=p+"%"; if(msg) statusEl.textContent=msg; };
-
   setP(5,"Uploading your images\u2026");
   const imageURLs = await uploadImagesToCloudinary();
 
-  setP(25,"Claude is editing your story\u2026");
-  const editedBody = await editStoryWithClaude(title, category, body);
+  setP(30,"Formatting your story\u2026");
+  const editedBody = await editStoryWithGemini(title, category, body);
+  setP(60, PIKA_API_KEY ? "Generating video prompt\u2026" : "Saving your story\u2026");
+  const videoPrompt = PIKA_API_KEY ? await generateVideoPrompt(title, category, body) : "";
 
-  setP(50,"Generating video prompt\u2026");
-  const videoPrompt = await generateVideoPrompt(title, category, body);
-
-  setP(70,"Saving your story\u2026");
+  setP(80,"Saving your story\u2026");
   const wordCount = body.split(/\s+/).length;
   const readTime = Math.max(1,Math.ceil(wordCount/200));
   const excerpt = body.slice(0,160).trim();
@@ -1239,8 +1282,11 @@ async function startGenerate() {
       title, body, editedBody, excerpt, category,
       authorId: currentUser.uid,
       authorName: currentUser.displayName||currentUser.email.split("@")[0],
-      imageURLs, videoURL: null,
-      videoPrompt, videoProvider: selectedVideo,
+      imageURLs,
+      videoURL: null,
+      videoPrompt,
+      videoProvider: selectedVideo,
+      /* Only mark as generating if we actually have a key and will call Pika */
       videoGenerating: !!PIKA_API_KEY,
       readTime: readTime+" min",
       likes: [], commentCount: 0,
@@ -1248,17 +1294,21 @@ async function startGenerate() {
     });
     currentStoryId = docRef.id;
 
-    setP(85,"Requesting video generation\u2026");
-    /* Fire-and-forget polling — saves URL to Firestore when done */
     if (PIKA_API_KEY) {
+      setP(90,"Starting video generation\u2026");
       generateAndSaveVideo(docRef.id, videoPrompt);
     }
 
-    setP(100,"Done!");
+    setP(100,"Story published!");
     setTimeout(() => {
       document.getElementById("gen-running").classList.add("hidden");
       document.getElementById("gen-done").classList.remove("hidden");
       document.getElementById("si4").classList.add("on");
+      /* Update done message based on whether video is generating */
+      if (!PIKA_API_KEY) {
+        document.getElementById("gen-done").querySelector("p").textContent =
+          "Your story is live. Add a Pika Labs API key to enable AI video generation.";
+      }
     }, 600);
   } catch(e) {
     showToast("Couldn't save story. Please try again.");
@@ -1312,7 +1362,7 @@ function goStep(n) {
 }
 
 /* ══════════════════════════════════════════════════════
-   FORMAT BODY — editorial without Claude
+   FORMAT BODY — editorial without Gemini
    ══════════════════════════════════════════════════════ */
 function formatBody(text, isRTL, theme) {
   if (!text) return "";
@@ -1358,7 +1408,6 @@ function timeAgo(ts) {
   if (secs<60) return "just now";
   if (secs<3600) return Math.floor(secs/60)+" min ago";
   if (secs<86400) return Math.floor(secs/3600)+" hr ago";
-  if (secs<604800) return Math.floor(secs/86400)+" days ago";
   return Math.floor(secs/604800)+" weeks ago";
 }
 
@@ -1410,10 +1459,14 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
   const urlParams=new URLSearchParams(window.location.search);
   if (urlParams.get("story")) setTimeout(()=>openStory(urlParams.get("story")),800);
+  
+  const savedKey = getGeminiKey();
+  if (savedKey && document.getElementById("gemini-key-input")) {
+    document.getElementById("gemini-key-input").value = savedKey;
+  }
 });
 </script>
 
-<!-- NAV -->
 <nav>
   <div class="nav-logo" onclick="showPage('feed')">
     <div class="logo-mark"><svg viewBox="0 0 16 16"><path d="M8 1L9.8 5.8H15L10.6 8.7L12.4 13.5L8 10.6L3.6 13.5L5.4 8.7L1 5.8H6.2Z"/></svg></div>
@@ -1430,7 +1483,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   </div>
 </nav>
 
-<!-- AUTH PAGE -->
 <div class="page" id="page-auth">
   <div class="auth-wrap">
     <div class="auth-card">
@@ -1457,7 +1509,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   </div>
 </div>
 
-<!-- FEED PAGE -->
 <div class="page active" id="page-feed">
   <div class="feed-hero">
     <h1>Stories of <em>courage</em><br>that move the world</h1>
@@ -1493,7 +1544,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   </div>
 </div>
 
-<!-- CREATE PAGE -->
 <div class="page" id="page-create">
   <div class="create-wrap">
     <h2>Share Your Story</h2>
@@ -1507,8 +1557,26 @@ document.addEventListener("DOMContentLoaded",()=>{
       <div class="step-line"></div>
       <div class="step-item" id="si4"><div class="step-num">4</div> Publish</div>
     </div>
-    <!-- Step 1 -->
     <div id="cs1">
+      <label class="flabel">AI Formatting Engine</label>
+      <div class="provider-block">
+        <div class="provider-default">
+          <div class="provider-icon" style="background:#edf3fb;">✨</div>
+          <div class="provider-text">
+            <h4>Google Gemini <span class="rec-badge">Free</span></h4>
+            <p>Required to auto-format your story and generate page designs.</p>
+          </div>
+          <button class="adv-toggle" id="gemini-toggle" onclick="toggleAdv('gemini')">Setup <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+        </div>
+        <div class="adv-panel" id="gemini-adv">
+          <div class="adv-title">Your Private API Key</div>
+          <p style="font-size:.8rem;color:var(--text2);margin-bottom:.8rem;">Your key is stored locally in your browser and never sent to our servers. Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent);">aistudio.google.com</a>.</p>
+          <div class="key-row show" id="gemini-key-row">
+            <input type="password" id="gemini-key-input" placeholder="AIzaSy..." onchange="saveGeminiKey()">
+          </div>
+        </div>
+      </div>
+
       <div class="fsection"><label class="flabel">Story Title</label><input class="finput" id="s-title" placeholder="Give your story a powerful title&#x2026;"></div>
       <div class="fsection"><label class="flabel">Category</label>
         <select class="finput" id="s-cat"><option>Rescue</option><option>Military</option><option>Everyday Heroes</option><option>Medical</option><option>Youth</option><option>Community</option><option>Survival</option></select>
@@ -1516,7 +1584,6 @@ document.addEventListener("DOMContentLoaded",()=>{
       <div class="fsection"><label class="flabel">Your Story</label><textarea class="finput" id="s-text" placeholder="Tell us what happened. Be as detailed as you like&#x2026;"></textarea></div>
       <button class="gen-btn" onclick="goStep(2)">Continue to Images &#x2192;</button>
     </div>
-    <!-- Step 2 -->
     <div id="cs2" class="hidden">
       <div class="fsection">
         <label class="flabel">Upload Images <span style="font-weight:400;text-transform:none;color:var(--text3);">(up to 12)</span></label>
@@ -1551,7 +1618,6 @@ document.addEventListener("DOMContentLoaded",()=>{
         <button class="gen-btn" onclick="goStep(3)">Continue to Video &#x2192;</button>
       </div>
     </div>
-    <!-- Step 3 -->
     <div id="cs3" class="hidden">
       <label class="flabel">AI Video Provider</label>
       <div class="provider-block">
@@ -1573,14 +1639,13 @@ document.addEventListener("DOMContentLoaded",()=>{
       </div>
       <div style="margin-top:1.5rem;padding:1.2rem 1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);">
         <div style="font-size:.78rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem;">How your video prompt is created</div>
-        <p style="font-size:.84rem;color:var(--text2);line-height:1.6;">Your story is sent to Claude, which uses Valor's editorial bravery template &#x2014; cinematic pacing, authentic emotion, no clich&#xE9;s &#x2014; and writes a precise video prompt. That prompt goes directly to your chosen AI video provider.</p>
+        <p style="font-size:.84rem;color:var(--text2);line-height:1.6;">Your story is sent to Gemini, which uses Valor's editorial bravery template &#x2014; cinematic pacing, authentic emotion, no clich&#xE9;s &#x2014; and writes a precise video prompt. That prompt goes directly to your chosen AI video provider.</p>
       </div>
       <div style="display:flex;gap:10px;margin-top:1.25rem;">
         <button class="back-btn" onclick="goStep(2)">&#x2190; Back</button>
-        <button class="gen-btn" id="gen-btn-main" onclick="startGenerate()">Generate My Video Story &#x2192;</button>
+        <button class="gen-btn" id="gen-btn-main" onclick="startGenerate()">Publish My Story &#x2192;</button>
       </div>
     </div>
-    <!-- Step 4 -->
     <div id="cs4" class="hidden">
       <div class="gen-state" id="gen-running">
         <div class="spinner"></div>
@@ -1602,7 +1667,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   </div>
 </div>
 
-<!-- STORY VIEW PAGE -->
 <div class="page" id="page-story">
   <div id="story-content-area"><div class="feed-loading" style="padding:6rem 2rem;">Loading&#x2026;</div></div>
   <div class="comments">
@@ -1616,7 +1680,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   </div>
 </div>
 
-<!-- PROFILE PAGE -->
 <div class="page" id="page-profile">
   <div class="prof-banner" id="prof-banner"></div>
   <div class="prof-body">
@@ -1666,7 +1729,6 @@ document.addEventListener("DOMContentLoaded",()=>{
   </div>
 </div>
 
-<!-- CHAT -->
 <div class="chat-panel" id="chat-panel">
   <div class="chat-hdr">
     <div><h4>Community Chat</h4><div class="chat-online"><div class="online-dot"></div>Live</div></div>
