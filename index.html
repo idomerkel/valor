@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Valor — Bravery Stories</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:#ffffff;--bg2:#f8f7f4;--bg3:#f0efe9;
@@ -88,7 +88,6 @@ nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.94);backdrop-
 .feed-side{width:296px;flex-shrink:0;padding:2rem 2rem 2rem 0;border-left:1px solid var(--border);display:none;}
 @media(min-width:1060px){.feed-main{margin:0;}.feed-side{display:block;}}
 
-/* LOADING STATE */
 .feed-loading{text-align:center;padding:4rem 2rem;color:var(--text3);}
 .feed-empty{text-align:center;padding:4rem 2rem;}
 .feed-empty h3{font-family:var(--serif);font-size:1.5rem;margin-bottom:.5rem;}
@@ -171,7 +170,8 @@ textarea.finput{min-height:160px;resize:vertical;line-height:1.65;}
 .adv-opt{border:1.5px solid var(--border);border-radius:var(--radius-xs);padding:.8rem 1rem;cursor:pointer;transition:var(--tr);background:white;position:relative;text-align:left;}
 .adv-opt:hover{border-color:var(--accent);}
 .adv-opt.sel{border-color:var(--accent);background:var(--accent-light);}
-.adv-opt.sel::after{content:'✓';position:absolute;top:6px;right:8px;font-size:.75rem;color:var(--accent);font-weight:700;}
+.adv-opt.sel::after{content:'checkmark';position:absolute;top:6px;right:8px;font-size:.75rem;color:var(--accent);font-weight:700;}
+.adv-opt.sel::after{content:'\2713';}
 .adv-opt h5{font-size:.85rem;font-weight:500;color:var(--text);margin-bottom:2px;}
 .adv-opt p{font-size:.75rem;color:var(--text2);}
 .free-tag{font-size:.65rem;background:var(--green-light);color:var(--green);padding:2px 6px;border-radius:100px;font-weight:600;margin-left:4px;}
@@ -192,44 +192,88 @@ textarea.finput{min-height:160px;resize:vertical;line-height:1.65;}
 .done-icon{width:56px;height:56px;background:var(--green-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.1rem;}
 .done-icon svg{width:24px;height:24px;stroke:var(--green);fill:none;stroke-width:2.5;}
 
-/* STORY VIEW */
-.story-wrap{max-width:900px;margin:0 auto;}
-.story-hdr{padding:3rem 2rem 1.5rem;}
-.s-cat-tag{display:inline-block;background:var(--accent-light);color:var(--accent);font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:100px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem;}
-.s-title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.4rem);line-height:1.08;letter-spacing:-.025em;margin-bottom:.9rem;}
-.s-sub{font-size:1.1rem;color:var(--text2);line-height:1.65;margin-bottom:1.4rem;font-weight:300;}
-.s-byline{display:flex;align-items:center;gap:11px;padding-bottom:1.4rem;border-bottom:1px solid var(--border);margin-bottom:1.75rem;}
-.s-share{display:flex;gap:7px;margin-bottom:2rem;flex-wrap:wrap;}
-.s-share-btn{padding:6px 14px;border:1px solid var(--border);border-radius:100px;font-size:.78rem;font-weight:500;background:white;color:var(--text2);cursor:pointer;transition:var(--tr);}
-.s-share-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
-.vid-wrap{margin:0 2rem 2.5rem;border-radius:var(--radius);overflow:hidden;background:#0c0403;position:relative;aspect-ratio:16/9;}
-.vid-poster{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(145deg,#160806,#2d1410);}
-.vid-actual{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
-.vid-play{width:70px;height:70px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;box-shadow:0 8px 32px rgba(192,57,43,.4);cursor:pointer;transition:transform .15s;}
-.vid-play:hover{transform:scale(1.07);}
-.vid-play svg{width:28px;height:28px;fill:white;margin-left:3px;}
-.vid-label{font-family:var(--serif);font-size:1.2rem;color:white;margin-bottom:.2rem;}
-.vid-dur-label{font-size:.78rem;color:rgba(255,255,255,.45);}
-.vid-ctrl{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:1.25rem 1rem .9rem;display:flex;align-items:center;gap:10px;}
-.v-btn{background:none;border:none;color:white;cursor:pointer;padding:3px;}
-.v-btn svg{width:17px;height:17px;fill:white;}
-.prog-track{flex:1;height:3px;background:rgba(255,255,255,.28);border-radius:2px;cursor:pointer;}
-.prog-track-fill{height:100%;background:var(--accent);border-radius:2px;width:0;transition:width .5s linear;}
-.vid-time{font-size:.72rem;color:rgba(255,255,255,.65);}
-.s-imgs{margin:0 2rem 2.5rem;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.s-imgs .main-img{grid-column:1/-1;border-radius:var(--radius);overflow:hidden;height:280px;background:var(--bg3);}
-.s-img-cell{border-radius:var(--radius-sm);overflow:hidden;height:150px;background:var(--bg3);}
-.s-img-cell img,.s-imgs .main-img img{width:100%;height:100%;object-fit:cover;}
-.s-img-grad{width:100%;height:100%;background:linear-gradient(145deg,#160806 0%,#3a1912 50%,#160806 100%);display:flex;align-items:center;justify-content:center;font-family:var(--serif);color:rgba(255,255,255,.12);font-size:1.3rem;}
-.s-text{padding:0 2rem 2rem;background:white;}.story-page-body{background:white;}
-.s-prose{font-size:1.04rem;line-height:1.85;color:var(--text2);}
-.s-prose p{margin-bottom:1.4rem;} .s-prose p.opening-hook{font-size:1.15rem;font-weight:500;color:var(--text);line-height:1.75;margin-bottom:1.75rem;}
-.s-prose strong{color:var(--text);font-weight:600;}
-.pull-quote{border-left:3px solid var(--accent);padding:.9rem 1.4rem;margin:1.75rem 0;background:var(--accent-light);border-radius:0 var(--radius-xs) var(--radius-xs) 0;}
-.pull-quote p{font-family:var(--serif);font-size:1.18rem;color:var(--text);line-height:1.5;margin:0;font-style:italic;}
+/* ═══════════════════════════════════════════════════════
+   STORY VIEW — Magazine-quality redesign
+   ═══════════════════════════════════════════════════════ */
+.story-page-outer{max-width:100%;overflow:hidden;}
+
+/* CINEMATIC HERO */
+.sp-hero{position:relative;min-height:70vh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;}
+.sp-hero-bg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;}
+.sp-hero-overlay{position:absolute;inset:0;}
+.sp-hero-content{position:relative;z-index:2;padding:3rem 2.5rem 2.5rem;max-width:860px;margin:0 auto;width:100%;}
+.sp-category-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:100px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1.25rem;}
+.sp-title{font-family:'Playfair Display',Georgia,serif;font-size:clamp(2.2rem,5.5vw,4rem);line-height:1.06;letter-spacing:-.02em;color:white;margin-bottom:1rem;text-shadow:0 2px 20px rgba(0,0,0,.3);}
+.sp-subtitle{font-family:'Crimson Pro',Georgia,serif;font-size:clamp(1.05rem,2vw,1.3rem);font-weight:300;font-style:italic;color:rgba(255,255,255,.78);line-height:1.6;margin-bottom:1.5rem;max-width:620px;}
+.sp-byline-row{display:flex;align-items:center;gap:12px;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,.15);}
+.sp-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:600;color:white;flex-shrink:0;border:2px solid rgba(255,255,255,.3);}
+.sp-author-name{font-size:.88rem;font-weight:500;color:white;}
+.sp-author-meta{font-size:.75rem;color:rgba(255,255,255,.52);margin-top:2px;}
+.sp-actions{margin-left:auto;display:flex;gap:8px;}
+.sp-action-btn{padding:7px 14px;border-radius:100px;font-size:.78rem;font-weight:500;cursor:pointer;transition:var(--tr);border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:white;backdrop-filter:blur(8px);}
+.sp-action-btn:hover{background:rgba(255,255,255,.22);}
+.sp-action-btn.liked{background:var(--accent);border-color:var(--accent);}
+
+/* ARTICLE BODY */
+.sp-body{max-width:860px;margin:0 auto;padding:0 2.5rem;}
+
+/* VIDEO BLOCK — full width cinematic */
+.sp-video-block{margin:2.5rem 0;}
+.sp-video-wrap{border-radius:16px;overflow:hidden;background:#060606;position:relative;aspect-ratio:16/9;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.sp-video-wrap video{width:100%;height:100%;display:block;object-fit:cover;}
+.sp-video-generating{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;}
+.sp-vid-spinner{width:52px;height:52px;border:3px solid rgba(255,255,255,.1);border-radius:50%;margin:0 auto 1.25rem;position:relative;}
+.sp-vid-spinner::after{content:'';position:absolute;inset:-3px;border:3px solid transparent;border-radius:50%;animation:spin .9s linear infinite;}
+.sp-vid-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:white;margin-bottom:.4rem;}
+.sp-vid-sub{font-size:.82rem;color:rgba(255,255,255,.45);margin-bottom:1.5rem;}
+.sp-vid-bar-wrap{width:260px;height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin:0 auto .5rem;}
+.sp-vid-bar-fill{height:100%;border-radius:2px;width:0;transition:width .6s ease;}
+.sp-vid-note{font-size:.72rem;color:rgba(255,255,255,.28);}
+.sp-video-label{font-size:.75rem;color:var(--text3);text-align:center;margin-top:.75rem;letter-spacing:.03em;}
+
+/* IMAGE MOSAIC */
+.sp-mosaic{margin:2.5rem 0;}
+.sp-mosaic-1{border-radius:14px;overflow:hidden;height:380px;}
+.sp-mosaic-1 img{width:100%;height:100%;object-fit:cover;}
+.sp-mosaic-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;height:280px;}
+.sp-mosaic-3{display:grid;grid-template-columns:2fr 1fr;gap:10px;height:320px;}
+.sp-mosaic-3 .sp-mosaic-col{display:flex;flex-direction:column;gap:10px;}
+.sp-mosaic-cell{border-radius:10px;overflow:hidden;height:100%;}
+.sp-mosaic-cell img{width:100%;height:100%;object-fit:cover;display:block;}
+.sp-mosaic-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);color:rgba(255,255,255,.08);font-size:3rem;}
+.sp-img-caption{font-size:.75rem;color:var(--text3);text-align:center;margin-top:.6rem;font-style:italic;}
+
+/* PROSE */
+.sp-prose-wrap{padding:2rem 0 1.5rem;}
+.sp-prose{font-family:'Crimson Pro',Georgia,serif;font-size:1.18rem;line-height:1.88;color:#2a2825;}
+.sp-prose p{margin-bottom:1.5rem;}
+.sp-prose p.hook{font-size:1.32rem;font-weight:400;line-height:1.72;color:#111;font-style:italic;}
+.sp-prose strong{color:#111;font-weight:600;}
+.sp-prose em{font-style:italic;}
+
+/* PULL QUOTE — full width editorial */
+.sp-pullquote{margin:2.2rem -2.5rem;padding:2.2rem 2.5rem;position:relative;}
+.sp-pullquote::before{content:'\201C';position:absolute;top:-10px;left:2.5rem;font-family:'Playfair Display',serif;font-size:7rem;line-height:1;opacity:.15;}
+.sp-pullquote blockquote{font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.35rem,3vw,1.9rem);font-style:italic;line-height:1.45;letter-spacing:-.01em;position:relative;z-index:1;}
+.sp-pullquote cite{display:block;font-size:.8rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-top:.9rem;font-style:normal;opacity:.6;}
+
+/* DIVIDER */
+.sp-divider{display:flex;align-items:center;gap:12px;margin:1.75rem 0;opacity:.35;}
+.sp-divider::before,.sp-divider::after{content:'';flex:1;height:1px;background:currentColor;}
+.sp-divider-star{font-size:.7rem;}
+
+/* SHARE STRIP */
+.sp-share-strip{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.2rem 0;margin:1.5rem 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.sp-share-label{font-size:.75rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-right:4px;}
+.sp-share-btn{padding:7px 16px;border-radius:100px;font-size:.8rem;font-weight:500;cursor:pointer;transition:var(--tr);border:1px solid var(--border);background:white;color:var(--text2);}
+.sp-share-btn:hover{background:var(--bg2);}
+.sp-share-btn.wa{border-color:#25D366;color:#25D366;}
+.sp-share-btn.wa:hover{background:#25D366;color:white;}
+.sp-share-btn.tw{border-color:#1DA1F2;color:#1DA1F2;}
+.sp-share-btn.tw:hover{background:#1DA1F2;color:white;}
 
 /* COMMENTS */
-.comments{border-top:1px solid var(--border);padding:2rem;}
+.comments{border-top:1px solid var(--border);padding:2rem 2.5rem;max-width:860px;margin:0 auto;}
 .comments h3{font-family:var(--serif);font-size:1.45rem;margin-bottom:1.4rem;}
 .cmt-input-row{display:flex;gap:11px;margin-bottom:1.75rem;align-items:flex-start;}
 .cmt-box{flex:1;padding:9px 13px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:.875rem;resize:none;outline:none;min-height:76px;color:var(--text);transition:border-color .15s;}
@@ -242,8 +286,6 @@ textarea.finput{min-height:160px;resize:vertical;line-height:1.65;}
 .cmt-name{font-size:.85rem;font-weight:500;margin-bottom:3px;}
 .cmt-text{font-size:.85rem;color:var(--text2);line-height:1.6;}
 .cmt-meta{font-size:.72rem;color:var(--text3);margin-top:5px;}
-.cmt-like-btn{font-size:.72rem;color:var(--text3);cursor:pointer;margin-top:5px;display:inline-block;background:none;border:none;padding:0;}
-.cmt-like-btn:hover{color:var(--accent);}
 
 /* PROFILE */
 .prof-banner{height:170px;background:linear-gradient(140deg,#160806,#3a1912);}
@@ -308,8 +350,6 @@ textarea.finput{min-height:160px;resize:vertical;line-height:1.65;}
 </head>
 <body>
 
-<!-- Firebase SDKs (CDN — no npm needed for static HTML) -->
-<!-- Firebase compat SDKs — work on any static host including GitHub Pages -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -326,22 +366,22 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ── CONFIG — fill these in ── */
-const CLOUDINARY_CLOUD = "dezy82ghg";   // from cloudinary.com dashboard
-const CLOUDINARY_PRESET = "valor_upload";      // unsigned preset name
-const PIKA_API_KEY = "";                       // from pika.art/account
-const ANTHROPIC_KEY = "";                      // from console.anthropic.com
+/* ── CONFIG ── */
+const CLOUDINARY_CLOUD = "dezy82ghg";
+const CLOUDINARY_PRESET = "valor_upload";
+const PIKA_API_KEY = "";
+const ANTHROPIC_KEY = "";
 
 /* ── CATEGORY THEMES ── */
 const THEMES = {
-  "Rescue":         { bg:"#0a1628", accent:"#1a6bb5", light:"#e8f2fb", tag:"#1a6bb5", font:"cold blue" },
-  "Military":       { bg:"#111a0e", accent:"#3a6b2a", light:"#e8f2e4", tag:"#3a6b2a", font:"military green" },
-  "Medical":        { bg:"#0e1a26", accent:"#1a7a9a", light:"#e4f4f8", tag:"#1a7a9a", font:"medical teal" },
-  "Everyday Heroes":{ bg:"#1a1008", accent:"#b5860d", light:"#fdf8ed", tag:"#b5860d", font:"warm gold" },
-  "Youth":          { bg:"#1a0a1a", accent:"#7a3a9a", light:"#f5eefb", tag:"#7a3a9a", font:"purple" },
-  "Community":      { bg:"#0a1a16", accent:"#1a7a5a", light:"#e4f8f2", tag:"#1a7a5a", font:"community green" },
-  "Survival":       { bg:"#1a0e08", accent:"#a0521a", light:"#fdf0e4", tag:"#a0521a", font:"earthy orange" },
-  "default":        { bg:"#160806", accent:"#c0392b", light:"#fdf0ef", tag:"#c0392b", font:"valor red" }
+  "Rescue":         { bg:"#0a1628", accent:"#1a6bb5", light:"#e8f2fb", tag:"#1a6bb5", overlay:"rgba(10,22,40,.82)", pillBg:"rgba(26,107,181,.25)", pillColor:"#7ab8e8" },
+  "Military":       { bg:"#111a0e", accent:"#3a6b2a", light:"#e8f2e4", tag:"#3a6b2a", overlay:"rgba(17,26,14,.85)", pillBg:"rgba(58,107,42,.25)", pillColor:"#8ec87a" },
+  "Medical":        { bg:"#0e1a26", accent:"#1a7a9a", light:"#e4f4f8", tag:"#1a7a9a", overlay:"rgba(14,26,38,.82)", pillBg:"rgba(26,122,154,.25)", pillColor:"#6ec0d8" },
+  "Everyday Heroes":{ bg:"#1a1008", accent:"#b5860d", light:"#fdf8ed", tag:"#b5860d", overlay:"rgba(26,16,8,.82)", pillBg:"rgba(181,134,13,.25)", pillColor:"#e8c05a" },
+  "Youth":          { bg:"#1a0a1a", accent:"#7a3a9a", light:"#f5eefb", tag:"#7a3a9a", overlay:"rgba(26,10,26,.82)", pillBg:"rgba(122,58,154,.25)", pillColor:"#c07ae8" },
+  "Community":      { bg:"#0a1a16", accent:"#1a7a5a", light:"#e4f8f2", tag:"#1a7a5a", overlay:"rgba(10,26,22,.82)", pillBg:"rgba(26,122,90,.25)", pillColor:"#5ec8a0" },
+  "Survival":       { bg:"#1a0e08", accent:"#a0521a", light:"#fdf0e4", tag:"#a0521a", overlay:"rgba(26,14,8,.85)", pillBg:"rgba(160,82,26,.25)", pillColor:"#e89a5a" },
+  "default":        { bg:"#160806", accent:"#c0392b", light:"#fdf0ef", tag:"#c0392b", overlay:"rgba(22,8,6,.82)", pillBg:"rgba(192,57,43,.25)", pillColor:"#e88070" }
 };
 
 function getTheme(category) {
@@ -399,7 +439,7 @@ async function doLogin() {
   const pw = document.getElementById("login-pw").value;
   if (!email || !pw) { showAuthErr("Please enter your email and password."); return; }
   const btn = document.getElementById("login-btn");
-  btn.disabled = true; btn.textContent = "Signing in…";
+  btn.disabled = true; btn.textContent = "Signing in\u2026";
   try {
     await auth.signInWithEmailAndPassword(email, pw);
     showToast("Welcome back!"); showPage("feed");
@@ -414,13 +454,13 @@ async function doSignup() {
   if (!name || !email || !pw) { showAuthErr("Please fill in all fields."); return; }
   if (pw.length < 8) { showAuthErr("Password must be at least 8 characters."); return; }
   const btn = document.getElementById("signup-btn");
-  btn.disabled = true; btn.textContent = "Creating account…";
+  btn.disabled = true; btn.textContent = "Creating account\u2026";
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, pw);
     await cred.user.updateProfile({ displayName: name });
     showToast("Welcome to Valor, " + name.split(" ")[0] + "!"); showPage("feed");
   } catch(e) { showAuthErr(friendlyAuthError(e.code)); }
-  finally { btn.disabled = false; btn.textContent = "Create Account — Free"; }
+  finally { btn.disabled = false; btn.textContent = "Create Account \u2014 Free"; }
 }
 
 async function doSignOut() {
@@ -449,7 +489,7 @@ function showAuthErr(msg) {
 async function loadFeed() {
   const container = document.getElementById("story-cards");
   if (!container) return;
-  container.innerHTML = "<div class=\"feed-loading\">Loading stories…</div>";
+  container.innerHTML = "<div class=\"feed-loading\">Loading stories\u2026</div>";
   try {
     const snap = await db.collection("stories").orderBy("createdAt","desc").get();
     if (snap.empty) {
@@ -458,9 +498,24 @@ async function loadFeed() {
     }
     container.innerHTML = "";
     snap.forEach(d => container.appendChild(buildCard(d.id, d.data())));
+    loadTrending(snap);
   } catch(e) {
     container.innerHTML = "<div class=\"feed-empty\"><h3>Couldn't load stories</h3><p>Check your internet connection.</p></div>";
   }
+}
+
+function loadTrending(snap) {
+  const trendEl = document.getElementById("trend-list");
+  if (!trendEl) return;
+  const stories = [];
+  snap.forEach(d => stories.push({ id: d.id, ...d.data() }));
+  const sorted = stories.sort((a,b) => ((b.likes||[]).length + (b.commentCount||0)) - ((a.likes||[]).length + (a.commentCount||0))).slice(0,5);
+  trendEl.innerHTML = sorted.map((s,i) =>
+    "<div class=\"trend-item\" onclick=\"openStory('" + s.id + "')\">"+
+    "<div class=\"trend-n\">0"+(i+1)+"</div>"+
+    "<div><div class=\"trend-title\">" + s.title + "</div>"+
+    "<div class=\"trend-meta\">" + (s.likes||[]).length + " likes \u00b7 " + (s.commentCount||0) + " comments</div></div></div>"
+  ).join("");
 }
 
 function buildCard(id, s) {
@@ -474,7 +529,7 @@ function buildCard(id, s) {
   div.className = "scard";
   div.innerHTML =
     "<div class=\"scard-media\" style=\"background:linear-gradient(145deg,"+theme.bg+",#1a0a08);\" onclick=\"openStory('"+id+"')\">"+
-      (s.imageURLs&&s.imageURLs[0] ? "<img class=\"scard-thumb\" src=\""+s.imageURLs[0]+"\" loading=\"lazy\">" : "<div class=\"scard-media-bg\">✦</div>")+
+      (s.imageURLs&&s.imageURLs[0] ? "<img class=\"scard-thumb\" src=\""+s.imageURLs[0]+"\" loading=\"lazy\">" : "<div class=\"scard-media-bg\">\u2736</div>")+
       "<div class=\"play-ring\"><svg viewBox=\"0 0 24 24\"><path d=\"M8 5v14l11-7z\"/></svg></div>"+
       (s.videoDuration?"<div class=\"dur-tag\">"+s.videoDuration+"</div>":"")+
       "<div class=\"cat-tag\" style=\"background:"+theme.accent+";\">"+(s.category||"Story")+"</div>"+
@@ -482,26 +537,30 @@ function buildCard(id, s) {
     "<div class=\"scard-body\">"+
       "<div class=\"scard-author\">"+
         "<div class=\"av\" style=\"background:"+theme.accent+"\">"+initials+"</div>"+
-        "<div><div class=\"author-name\">"+(s.authorName||"Anonymous")+"</div><div class=\"author-meta\">"+timeAgo(s.createdAt)+" · "+(s.readTime||"3")+" min read</div></div>"+
+        "<div><div class=\"author-name\">"+(s.authorName||"Anonymous")+"</div><div class=\"author-meta\">"+timeAgo(s.createdAt)+" \u00b7 "+(s.readTime||"3")+" min read</div></div>"+
       "</div>"+
       "<div class=\"scard-title\" style=\""+rtlStyle+"\" onclick=\"openStory('"+id+"')\">"+s.title+"</div>"+
-      "<div class=\"scard-exc\" style=\""+rtlStyle+"\">"+(s.excerpt||s.body||"").slice(0,140)+"…</div>"+
+      "<div class=\"scard-exc\" style=\""+rtlStyle+"\">"+(s.excerpt||s.body||"").slice(0,140)+"\u2026</div>"+
       "<div class=\"scard-actions\">"+
         "<button class=\"scard-act "+(liked?"liked":"")+"\" id=\"like-"+id+"\" onclick=\"toggleLike('"+id+"',this)\">"+
           "<svg viewBox=\"0 0 24 24\"><path d=\"M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z\" "+(liked?"":"fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"")+"/></svg>"+
           "<span>"+likeCount+"</span></button>"+
         "<button class=\"scard-act\" onclick=\"openStory('"+id+"')\"><svg viewBox=\"0 0 24 24\"><path d=\"M21 6.5A2.5 2.5 0 0018.5 4h-13A2.5 2.5 0 003 6.5v8A2.5 2.5 0 005.5 17H7v3l4-3h7.5a2.5 2.5 0 002.5-2.5v-8z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg><span>"+(s.commentCount||0)+" comments</span></button>"+
-        "<button class=\"scard-act\" onclick=\"copyLink('"+id+"')\"><svg viewBox=\"0 0 24 24\"><path d=\"M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z\"/></svg>Share</button>"+
+        "<button class=\"scard-act\" onclick=\"shareStory('"+id+"','"+escAttr(s.title)+"')\"><svg viewBox=\"0 0 24 24\"><path d=\"M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z\"/></svg>Share</button>"+
       "</div>"+
     "</div>";
   return div;
+}
+
+function escAttr(str) {
+  return (str||"").replace(/'/g,"").replace(/"/g,"");
 }
 
 /* ── OPEN STORY ── */
 async function openStory(id) {
   currentStoryId = id;
   showPage("story");
-  document.getElementById("story-content-area").innerHTML = "<div class=\"feed-loading\">Loading story…</div>";
+  document.getElementById("story-content-area").innerHTML = "<div class=\"feed-loading\" style=\"padding:6rem 2rem;\">Loading story\u2026</div>";
   try {
     const snap = await db.collection("stories").doc(id).get();
     if (!snap.exists) { showToast("Story not found."); return; }
@@ -510,78 +569,130 @@ async function openStory(id) {
   } catch(e) { showToast("Couldn't load story."); }
 }
 
-/* ── RENDER STORY with full theme ── */
+/* ══════════════════════════════════════════════════════
+   RENDER STORY — Magazine-quality AI-powered layout
+   ══════════════════════════════════════════════════════ */
 function renderStory(id, s) {
   const theme = getTheme(s.category);
   const initials = (s.authorName||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
   const liked = currentUser && s.likes && s.likes.includes(currentUser.uid);
   const isRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(s.body||s.title||"");
   const rtlAttr = isRTL ? " dir=\"rtl\" style=\"text-align:right;direction:rtl;\"" : "";
+  const imgs = (s.imageURLs||[]).filter(u => u && u.startsWith("http"));
 
-  // Apply theme to story page hero
-  const heroStyle = "background:linear-gradient(160deg,"+theme.bg+" 0%,#0a0404 100%);";
-  const accentStyle = "background:"+theme.accent+";";
-  const tagStyle = "background:"+theme.light+";color:"+theme.accent+";";
+  /* Hero background — use first image if available, else gradient */
+  const heroBg = imgs[0]
+    ? "background-image:url('" + imgs[0] + "');"
+    : "background:" + theme.bg + ";";
 
-  // Images grid — only show cells that have real images
-  let imagesHTML = "";
-  const imgs = (s.imageURLs||[]).filter(u=>u&&u.startsWith("http"));
-  if (imgs.length > 0) {
-    let cells = "";
-    imgs.forEach((url,i) => {
-      if (i===0) return; // main image handled separately
-      cells += "<div class=\"s-img-cell\"><img src=\""+url+"\" alt=\"\"></div>";
-    });
-    imagesHTML = "<div class=\"s-imgs\" style=\"margin:0 2rem 2.5rem;grid-template-columns:"+(imgs.length>1?"1fr 1fr":"1fr")+";\">"+
-      "<div class=\"main-img\" style=\"grid-column:1/-1;\"><img src=\""+imgs[0]+"\" alt=\"\"></div>"+
-      cells+
-    "</div>";
-  }
-
-  // Video block — one-time only, never re-generates
-  let videoHTML = "";
-  if (s.videoURL) {
-    videoHTML = "<div style=\"margin:0 2rem 2.5rem;border-radius:14px;overflow:hidden;\">"+
-      "<video controls src=\""+s.videoURL+"\" style=\"width:100%;display:block;\"></video></div>";
-  } else if (s.videoGenerating) {
-    videoHTML = "<div style=\"margin:0 2rem 2.5rem;"+heroStyle+"border-radius:14px;padding:2rem 1.5rem;text-align:center;\">"+
-      "<div style=\"width:52px;height:52px;border:3px solid rgba(255,255,255,.15);border-top-color:"+theme.accent+";border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;\"></div>"+
-      "<div style=\"font-family:'DM Serif Display',serif;font-size:1.2rem;color:white;margin-bottom:.4rem;\">Video is being generated</div>"+
-      "<div style=\"font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:1.25rem;\">Processing with "+(s.videoProvider||"Pika Labs")+" — usually 2–5 minutes</div>"+
-      "<div style=\"height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;max-width:320px;margin:0 auto .6rem;\">"+
-        "<div id=\"bar_"+id+"\" style=\"height:100%;background:"+theme.accent+";border-radius:2px;width:0;transition:width .6s ease;\"></div>"+
-      "</div>"+
-      "<div style=\"font-size:.75rem;color:rgba(255,255,255,.35);\">Refresh in a few minutes to see your video</div>"+
-    "</div>";
-    setTimeout(() => startVidBar("bar_"+id), 200);
-  }
-  // No videoURL and not generating = show nothing. Clean.
-
-  // Use Claude-edited body if available, else format raw
-  const bodyHTML = s.editedBody || formatBody(s.body, isRTL);
-
-  document.getElementById("story-content-area").innerHTML =
-    "<div style=\""+heroStyle+"padding:3rem 2rem 2rem;margin-bottom:0;\">"+
-      "<div class=\"s-cat-tag\" style=\""+tagStyle+"\">"+((s.category||"Bravery Story")+" · Bravery Story")+"</div>"+
-      "<h1 class=\"s-title\" style=\"color:white;margin-bottom:.9rem;padding-top:.5rem;\""+rtlAttr+">"+s.title+"</h1>"+
-      "<p class=\"s-sub\" style=\"color:rgba(255,255,255,.6);\""+rtlAttr+">"+(s.excerpt||"")+"</p>"+
-      "<div class=\"s-byline\" style=\"border-bottom-color:rgba(255,255,255,.12);\" >"+
-        "<div class=\"av\" style=\""+accentStyle+"width:42px;height:42px;font-size:.95rem;\">"+initials+"</div>"+
-        "<div><div class=\"author-name\" style=\"color:white;\">"+s.authorName+"</div>"+
-        "<div class=\"author-meta\" style=\"color:rgba(255,255,255,.45);\">"+timeAgo(s.createdAt)+" · "+(s.readTime||"3")+" min read · "+(s.likes?s.likes.length:0)+" likes</div></div>"+
-      "</div>"+
-      "<div class=\"s-share\" style=\"padding-bottom:1rem;\">"+
-        "<button class=\"s-share-btn\" style=\"background:rgba(255,255,255,.1);color:white;border-color:rgba(255,255,255,.2);\" onclick=\"copyLink('"+id+"')\" >🔗 Copy link</button>"+
-        "<button class=\"s-share-btn\" style=\"background:rgba(255,255,255,.1);color:white;border-color:rgba(255,255,255,.2);\" id=\"story-like-btn\" onclick=\"toggleLike('"+id+"',this,true)\">"+(liked?"❤️ Liked":"♡ Like")+"</button>"+
+  /* Image mosaic block */
+  let mosaicHTML = "";
+  if (imgs.length === 1) {
+    mosaicHTML = "<div class=\"sp-mosaic\"><div class=\"sp-mosaic-1\"><img src=\""+imgs[0]+"\" alt=\"\"></div></div>";
+  } else if (imgs.length === 2) {
+    mosaicHTML = "<div class=\"sp-mosaic\"><div class=\"sp-mosaic-2\">"+
+      "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[0]+"\" alt=\"\"></div>"+
+      "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[1]+"\" alt=\"\"></div>"+
+    "</div></div>";
+  } else if (imgs.length >= 3) {
+    const extras = imgs.slice(2).map(u => "<div class=\"sp-mosaic-cell\"><img src=\""+u+"\" alt=\"\"></div>").join("");
+    mosaicHTML = "<div class=\"sp-mosaic\"><div class=\"sp-mosaic-3\">"+
+      "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[0]+"\" alt=\"\"></div>"+
+      "<div class=\"sp-mosaic-col\">"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[1]+"\" alt=\"\"></div>"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[2]+"\" alt=\"\"></div>"+
       "</div>"+
     "</div>"+
-    videoHTML + imagesHTML +
-    "<div class=\"s-text\" style=\"background:white;border-radius:0 0 var(--radius) var(--radius);\"><div class=\"s-prose\""+rtlAttr+">"+bodyHTML+"</div></div>";
+    (imgs.length>3 ? "<div class=\"sp-mosaic-2\" style=\"margin-top:10px;\">"+extras+"</div>" : "")+
+    "</div>";
+  }
 
-  // Apply theme accent color to pull quotes
-  document.querySelectorAll(".pull-quote").forEach(q => {
-    q.style.borderLeftColor = theme.accent;
+  /* Video block */
+  let videoHTML = "";
+  if (s.videoURL) {
+    videoHTML =
+      "<div class=\"sp-video-block\">"+
+        "<div class=\"sp-video-wrap\">"+
+          "<video controls playsinline preload=\"metadata\" style=\"width:100%;height:100%;display:block;object-fit:cover;\">"+
+            "<source src=\""+s.videoURL+"\" type=\"video/mp4\">"+
+            "Your browser does not support this video."+
+          "</video>"+
+        "</div>"+
+        "<div class=\"sp-video-label\">AI-generated video \u00b7 "+s.videoDuration+"</div>"+
+      "</div>";
+  } else if (s.videoGenerating) {
+    videoHTML =
+      "<div class=\"sp-video-block\">"+
+        "<div class=\"sp-video-wrap\" style=\"background:"+theme.bg+";\">"+
+          "<div class=\"sp-video-generating\">"+
+            "<div class=\"sp-vid-spinner\" style=\"border-color:rgba(255,255,255,.1);\">"+
+              "<div style=\"position:absolute;inset:-3px;border:3px solid transparent;border-top-color:"+theme.accent+";border-radius:50%;animation:spin .9s linear infinite;\"></div>"+
+            "</div>"+
+            "<div class=\"sp-vid-title\">Video generating\u2026</div>"+
+            "<div class=\"sp-vid-sub\">Processing with "+(s.videoProvider||"Pika Labs")+" \u00b7 usually 2\u20135 min</div>"+
+            "<div class=\"sp-vid-bar-wrap\">"+
+              "<div class=\"sp-vid-bar-fill\" id=\"vbar_"+id+"\" style=\"background:"+theme.accent+";\"></div>"+
+            "</div>"+
+            "<div class=\"sp-vid-note\">Refresh in a few minutes to see your video</div>"+
+          "</div>"+
+        "</div>"+
+      "</div>";
+    setTimeout(() => startVidBar("vbar_"+id), 300);
+  }
+
+  /* Prose body */
+  const bodyHTML = s.editedBody || formatBody(s.body||"", isRTL, theme);
+
+  /* Story URL for sharing */
+  const storyURL = window.location.href.split("?")[0] + "?story=" + id;
+  const waURL = "https://wa.me/?text=" + encodeURIComponent(s.title + " " + storyURL);
+  const twURL = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(s.title) + "&url=" + encodeURIComponent(storyURL);
+
+  document.getElementById("story-content-area").innerHTML =
+    /* HERO */
+    "<div class=\"sp-hero\">"+
+      "<div class=\"sp-hero-bg\" style=\""+heroBg+"\"></div>"+
+      "<div class=\"sp-hero-overlay\" style=\"background:linear-gradient(to bottom,rgba(0,0,0,.15) 0%,"+theme.overlay+" 60%,"+theme.bg+" 100%);\"></div>"+
+      "<div class=\"sp-hero-content\">"+
+        "<div class=\"sp-category-pill\" style=\"background:"+theme.pillBg+";color:"+theme.pillColor+";border:1px solid "+theme.pillColor+"33;\">"+
+          (s.category||"Bravery Story")+
+        "</div>"+
+        "<h1 class=\"sp-title\""+rtlAttr+">"+s.title+"</h1>"+
+        (s.excerpt?"<p class=\"sp-subtitle\""+rtlAttr+">"+s.excerpt+"</p>":"")+
+        "<div class=\"sp-byline-row\">"+
+          "<div class=\"sp-av\" style=\"background:"+theme.accent+";\">"+initials+"</div>"+
+          "<div>"+
+            "<div class=\"sp-author-name\">"+(s.authorName||"Anonymous")+"</div>"+
+            "<div class=\"sp-author-meta\">"+timeAgo(s.createdAt)+" \u00b7 "+(s.readTime||"3")+" min read \u00b7 "+(s.likes?s.likes.length:0)+" likes</div>"+
+          "</div>"+
+          "<div class=\"sp-actions\">"+
+            "<button class=\"sp-action-btn "+(liked?"liked":"")+"\" id=\"story-like-btn\" onclick=\"toggleLike('"+id+"',this,true)\">"+
+              (liked?"\u2764\uFE0F Liked":"\u2661 Like")+
+            "</button>"+
+            "<button class=\"sp-action-btn\" onclick=\"copyLink('"+id+"')\">Copy link</button>"+
+          "</div>"+
+        "</div>"+
+      "</div>"+
+    "</div>"+
+    /* BODY */
+    "<div class=\"sp-body\">"+
+      videoHTML+
+      (imgs.length>0&&!imgs[0]?mosaicHTML:"")+
+      "<div class=\"sp-prose-wrap\"><div class=\"sp-prose\""+rtlAttr+">"+bodyHTML+"</div></div>"+
+      (imgs.length>1?mosaicHTML:"")+
+      "<div class=\"sp-share-strip\">"+
+        "<span class=\"sp-share-label\">Share</span>"+
+        "<button class=\"sp-share-btn wa\" onclick=\"window.open('"+waURL+"','_blank')\">WhatsApp</button>"+
+        "<button class=\"sp-share-btn tw\" onclick=\"window.open('"+twURL+"','_blank')\">Twitter / X</button>"+
+        "<button class=\"sp-share-btn\" onclick=\"copyLink('"+id+"')\">Copy link</button>"+
+      "</div>"+
+    "</div>";
+
+  /* Tint the hero if image was used — pull quote colors applied after render */
+  document.querySelectorAll(".sp-pullquote").forEach(q => {
     q.style.background = theme.light;
+    q.style.color = theme.accent;
+    q.querySelector("blockquote").style.color = theme.bg;
   });
 }
 
@@ -595,7 +706,8 @@ async function toggleLike(storyId, btn, isStoryPage) {
   const liked = s.likes && s.likes.includes(currentUser.uid);
   await ref.update({ likes: liked ? firebase.firestore.FieldValue.arrayRemove(currentUser.uid) : firebase.firestore.FieldValue.arrayUnion(currentUser.uid) });
   if (isStoryPage) {
-    btn.textContent = liked ? "♡ Like" : "❤️ Liked";
+    btn.textContent = liked ? "\u2661 Like" : "\u2764\uFE0F Liked";
+    btn.classList.toggle("liked", !liked);
   } else {
     btn.classList.toggle("liked",!liked);
     const span = btn.querySelector("span");
@@ -658,30 +770,26 @@ async function loadProfile() {
   document.getElementById("prof-name").textContent = name;
   document.getElementById("prof-email").textContent = currentUser.email;
   document.getElementById("edit-name").value = name;
-
-  // Load bio from Firestore user profile
   try {
     const userDoc = await db.collection("users").doc(currentUser.uid).get();
     const bio = userDoc.exists ? (userDoc.data().bio||"") : "";
     document.getElementById("prof-bio-display").textContent = bio;
     document.getElementById("edit-bio").value = bio;
   } catch(e) {}
-
   const snap = await db.collection("stories").orderBy("createdAt","desc").get();
   let myStories = [], totalLikes = 0;
   snap.forEach(d => { if(d.data().authorId===currentUser.uid){ myStories.push({id:d.id,...d.data()}); totalLikes+=(d.data().likes||[]).length; }});
   document.getElementById("prof-story-count").textContent = myStories.length;
   document.getElementById("prof-likes-count").textContent = totalLikes;
   const grid = document.getElementById("prof-stories-grid");
-  grid.innerHTML = myStories.length===0 ? "<p style=\"color:var(--text2);font-size:.9rem;\">No stories yet. <span style=\"color:var(--accent);cursor:pointer;\" onclick=\"showPage('create')\">Share your first story →</span></p>" : "";
+  grid.innerHTML = myStories.length===0 ? "<p style=\"color:var(--text2);font-size:.9rem;\">No stories yet. <span style=\"color:var(--accent);cursor:pointer;\" onclick=\"showPage('create')\">Share your first story \u2192</span></p>" : "";
   myStories.forEach(s => {
     const card = buildCard(s.id, s);
-    // Add manage bar to each story card
     const manageBar = document.createElement("div");
     manageBar.className = "story-manage-bar";
     manageBar.innerHTML =
-      "<button class=\"story-manage-btn\" onclick=\"editStory('"+s.id+"')\" >✏️ Edit</button>"+
-      "<button class=\"story-manage-btn del\" onclick=\"confirmDeleteStory('"+s.id+"','"+s.title.replace(/'/g,"")+"')\" >🗑 Delete</button>";
+      "<button class=\"story-manage-btn\" onclick=\"editStory('"+s.id+"')\">Edit</button>"+
+      "<button class=\"story-manage-btn del\" onclick=\"confirmDeleteStory('"+s.id+"','"+escAttr(s.title)+"')\">Delete</button>";
     card.appendChild(manageBar);
     grid.appendChild(card);
   });
@@ -708,8 +816,7 @@ async function saveProfile() {
       await currentUser.updatePassword(pw);
       showToast("Profile and password updated!");
     } else if (pw && pw.length < 8) {
-      showToast("Password must be at least 8 characters.");
-      return;
+      showToast("Password must be at least 8 characters."); return;
     } else {
       showToast("Profile saved!");
     }
@@ -726,8 +833,6 @@ async function saveProfile() {
 }
 
 function editStory(id) {
-  showToast("Opening story editor…");
-  // Pre-fill create form with existing story data
   db.collection("stories").doc(id).get().then(snap => {
     if (!snap.exists) return;
     const s = snap.data();
@@ -737,8 +842,7 @@ function editStory(id) {
     currentStoryId = id;
     showPage("create");
     goStep(1);
-    // Change button to "Update Story"
-    document.getElementById("gen-btn-main").textContent = "Update My Story →";
+    document.getElementById("gen-btn-main").textContent = "Update My Story \u2192";
     document.getElementById("gen-btn-main").onclick = () => updateStory(id);
   });
 }
@@ -751,9 +855,9 @@ async function updateStory(id) {
   goStep(4);
   const fill=document.getElementById("prog-fill");
   const setP=(p,msg)=>{fill.style.width=p+"%";document.getElementById("prog-pct").textContent=p+"%";if(msg)document.getElementById("gen-status").textContent=msg;};
-  setP(20,"Re-editing story with Claude…");
+  setP(20,"Re-editing story with Claude\u2026");
   const editedBody = await editStoryWithClaude(title, category, body);
-  setP(70,"Saving changes…");
+  setP(70,"Saving changes\u2026");
   try {
     await db.collection("stories").doc(id).update({
       title, body, editedBody, category,
@@ -767,8 +871,7 @@ async function updateStory(id) {
       document.getElementById("gen-done").querySelector("h3").textContent = "Story updated!";
       document.getElementById("gen-done").querySelector("p").textContent = "Your changes have been saved.";
     },500);
-    // Reset button back to normal
-    document.getElementById("gen-btn-main").textContent = "Generate My Video Story →";
+    document.getElementById("gen-btn-main").textContent = "Generate My Video Story \u2192";
     document.getElementById("gen-btn-main").onclick = startGenerate;
   } catch(e) { showToast("Couldn't update story."); goStep(3); }
 }
@@ -805,14 +908,11 @@ function confirmDeleteAccount() {
 async function deleteAccount() {
   closeModal(); resetModal();
   try {
-    // Delete all user stories
     const snap = await db.collection("stories").where("authorId","==",currentUser.uid).get();
     const batch = db.batch();
     snap.forEach(d => batch.delete(d.ref));
     await batch.commit();
-    // Delete user profile doc
     await db.collection("users").doc(currentUser.uid).delete();
-    // Delete auth account
     await currentUser.delete();
     showToast("Account deleted.");
     showPage("feed");
@@ -840,7 +940,7 @@ function handleFiles(files) {
     reader.onload = e => {
       const d = document.createElement("div");
       d.className = "img-thumb"; d._file = file;
-      d.innerHTML = "<img src=\""+e.target.result+"\"><button class=\"img-rm\" onclick=\"this.parentNode.remove()\">✕</button>";
+      d.innerHTML = "<img src=\""+e.target.result+"\"><button class=\"img-rm\" onclick=\"this.parentNode.remove()\">&#x2715;</button>";
       grid.appendChild(d);
     };
     reader.readAsDataURL(file);
@@ -848,7 +948,7 @@ function handleFiles(files) {
 }
 
 async function uploadImagesToCloudinary() {
-  if (CLOUDINARY_CLOUD==="YOUR_CLOUD_NAME") return [];
+  if (!CLOUDINARY_CLOUD || CLOUDINARY_CLOUD==="YOUR_CLOUD_NAME") return [];
   const thumbs = document.querySelectorAll(".img-thumb");
   const urls = [];
   for (const thumb of thumbs) {
@@ -865,57 +965,27 @@ async function uploadImagesToCloudinary() {
   return urls;
 }
 
-async function uploadVideoToCloudinary(videoBlob) {
-  if (CLOUDINARY_CLOUD==="YOUR_CLOUD_NAME" || !videoBlob) return null;
-  const fd = new FormData();
-  fd.append("file", videoBlob);
-  fd.append("upload_preset", CLOUDINARY_PRESET);
-  fd.append("resource_type", "video");
-  try {
-    const res = await fetch("https://api.cloudinary.com/v1_1/"+CLOUDINARY_CLOUD+"/video/upload",{method:"POST",body:fd});
-    const data = await res.json();
-    return data.secure_url || null;
-  } catch(e) { return null; }
-}
-
 /* ── CLAUDE: EDITORIAL TEXT EDITOR ── */
 async function editStoryWithClaude(title, category, body) {
   if (!ANTHROPIC_KEY) return null;
   const isRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(body);
-  const langNote = isRTL ? "The story is in Hebrew. Keep it in Hebrew. Apply RTL formatting." : "";
-  const prompt = "Title: "+title+"\nCategory: "+category+"\n\nStory:\n"+body;
-  const system = `You are Valor's editorial engine. Transform raw bravery stories into beautifully formatted HTML story pages.
-
-Rules:
-- Keep ALL the original facts, names, events — do not invent anything
-- ${langNote}
-- Return ONLY valid HTML, no markdown, no preamble
-- Structure: opening hook paragraph, body paragraphs, 1-2 pull quotes, closing paragraph
-- Use these HTML elements only:
-  <p> for paragraphs
-  <strong> for key moments/names
-  <div class="pull-quote"><p>quote here</p></div> for powerful quotes (max 2)
-  <p class="opening-hook"> for the dramatic first paragraph
-- Pull quotes should be the most powerful sentence in the story
-- Opening hook should grab the reader immediately
-- Each paragraph should be 2-4 sentences
-- Bold the most important moment in each paragraph`;
-
+  const langNote = isRTL ? "The story is in Hebrew. Keep it in Hebrew." : "";
+  const system = "You are Valor's editorial engine. Transform raw bravery stories into beautifully formatted HTML. " + langNote + "\nReturn ONLY valid HTML. Structure: opening hook paragraph (<p class=\"hook\">), body paragraphs, 1-2 pull quotes, closing paragraph.\nHTML elements allowed: <p>, <strong>, <em>, <div class=\"sp-pullquote\"><blockquote>quote</blockquote></div>\nPull quotes must be the most powerful sentence. Opening hook grabs reader immediately. Bold the most important moment per paragraph. No preamble, no markdown.";
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
       headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:2000,system,messages:[{role:"user",content:prompt}]})
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:2000,system,messages:[{role:"user",content:"Title: "+title+"\nCategory: "+category+"\n\nStory:\n"+body}]})
     });
     const data = await res.json();
-    return data.content?.[0]?.text || null;
+    return data.content&&data.content[0]&&data.content[0].text ? data.content[0].text : null;
   } catch(e) { return null; }
 }
 
 /* ── CLAUDE: VIDEO PROMPT ── */
 async function generateVideoPrompt(title, category, body) {
-  if (!ANTHROPIC_KEY) return "Cinematic documentary: "+title+". "+body.slice(0,100);
-  const system = "You are Valor editorial AI. Transform a bravery story into a precise cinematic video prompt (90-120 words). Vivid imagery, no cliches, documentary style. Output ONLY the prompt.";
+  if (!ANTHROPIC_KEY) return "Cinematic documentary: " + title + ". " + body.slice(0,100);
+  const system = "You are Valor editorial AI. Write a cinematic video prompt (90-120 words) for a bravery story. Vivid imagery, no cliches, documentary style. Output ONLY the prompt text, nothing else.";
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
@@ -923,32 +993,100 @@ async function generateVideoPrompt(title, category, body) {
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,system,messages:[{role:"user",content:"Title: "+title+"\nCategory: "+category+"\nStory: "+body.slice(0,800)}]})
     });
     const data = await res.json();
-    return data.content?.[0]?.text || "";
+    return data.content&&data.content[0]&&data.content[0].text ? data.content[0].text : "";
   } catch(e) { return "Cinematic: "+title+". "+body.slice(0,80); }
 }
 
-/* ── PIKA: GENERATE VIDEO (once only) ── */
-async function generateAndSaveVideo(storyId, videoPrompt, videoProvider) {
-  if (!PIKA_API_KEY) return null;
-  try {
-    // Call Pika API
-    const res = await fetch("https://api.pika.art/v1/generate",{
-      method:"POST",
-      headers:{"Authorization":"Bearer "+PIKA_API_KEY,"Content-Type":"application/json"},
-      body:JSON.stringify({prompt:videoPrompt,duration:90,aspectRatio:"16:9",style:"cinematic"})
-    });
-    const data = await res.json();
-    const videoURL = data.videoUrl || data.url || null;
-    if (!videoURL) return null;
+/* ══════════════════════════════════════════════════════
+   PIKA VIDEO GENERATION — Corrected polling-based flow
+   ══════════════════════════════════════════════════════ */
+async function generateAndSaveVideo(storyId, videoPrompt) {
+  if (!PIKA_API_KEY) return;
 
-    // Save URL permanently to Firestore — never generates again
-    await db.collection("stories").doc(storyId).update({
-      videoURL, videoGenerating: false,
-      videoDuration: "1:30"
+  try {
+    /* Step 1: Submit generation request */
+    const submitRes = await fetch("https://api.pika.art/v2/generate", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + PIKA_API_KEY,
+        "Content-Type": "application/json",
+        "X-Pika-Client": "valor"
+      },
+      body: JSON.stringify({
+        promptText: videoPrompt,
+        options: {
+          aspectRatio: "16:9",
+          frameRate: 24,
+          resolution: "720p",
+          duration: 5
+        }
+      })
     });
-    return videoURL;
-  } catch(e) { return null; }
+
+    if (!submitRes.ok) {
+      console.warn("Pika submit failed:", submitRes.status);
+      await db.collection("stories").doc(storyId).update({ videoGenerating: false });
+      return;
+    }
+
+    const submitData = await submitRes.json();
+    const taskId = submitData.id || submitData.taskId || submitData.requestId;
+    if (!taskId) {
+      console.warn("No task ID in Pika response:", submitData);
+      await db.collection("stories").doc(storyId).update({ videoGenerating: false });
+      return;
+    }
+
+    /* Step 2: Poll for completion (max 10 min, every 15 sec) */
+    const maxAttempts = 40;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      await sleep(15000);
+
+      try {
+        const pollRes = await fetch("https://api.pika.art/v2/tasks/" + taskId, {
+          headers: { "Authorization": "Bearer " + PIKA_API_KEY }
+        });
+
+        if (!pollRes.ok) continue;
+        const pollData = await pollRes.json();
+        const status = (pollData.status || "").toLowerCase();
+
+        if (status === "completed" || status === "succeeded" || status === "finished") {
+          const videoURL = pollData.video && (pollData.video.url || pollData.video.resultUrl)
+            ? (pollData.video.url || pollData.video.resultUrl)
+            : (pollData.resultUrl || pollData.url || null);
+
+          if (videoURL) {
+            await db.collection("stories").doc(storyId).update({
+              videoURL: videoURL,
+              videoGenerating: false,
+              videoDuration: "0:05"
+            });
+            return;
+          }
+        }
+
+        if (status === "failed" || status === "error") {
+          console.warn("Pika generation failed for task:", taskId);
+          await db.collection("stories").doc(storyId).update({ videoGenerating: false });
+          return;
+        }
+        /* still pending — continue polling */
+      } catch(pollErr) {
+        console.warn("Poll attempt "+attempt+" failed:", pollErr);
+      }
+    }
+
+    /* Timed out */
+    await db.collection("stories").doc(storyId).update({ videoGenerating: false });
+
+  } catch(e) {
+    console.warn("generateAndSaveVideo error:", e);
+    try { await db.collection("stories").doc(storyId).update({ videoGenerating: false }); } catch(_) {}
+  }
 }
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 /* ── CREATE: MAIN GENERATE FLOW ── */
 async function startGenerate() {
@@ -964,16 +1102,16 @@ async function startGenerate() {
   const pctEl = document.getElementById("prog-pct");
   const setP = (p,msg) => { fill.style.width=p+"%"; pctEl.textContent=p+"%"; if(msg) statusEl.textContent=msg; };
 
-  setP(5,"Uploading your images…");
+  setP(5,"Uploading your images\u2026");
   const imageURLs = await uploadImagesToCloudinary();
 
-  setP(20,"Claude is editing and formatting your story…");
+  setP(25,"Claude is editing your story\u2026");
   const editedBody = await editStoryWithClaude(title, category, body);
 
-  setP(40,"Generating your video prompt…");
+  setP(50,"Generating video prompt\u2026");
   const videoPrompt = await generateVideoPrompt(title, category, body);
 
-  setP(60,"Saving your story…");
+  setP(70,"Saving your story\u2026");
   const wordCount = body.split(/\s+/).length;
   const readTime = Math.max(1,Math.ceil(wordCount/200));
   const excerpt = body.slice(0,160).trim();
@@ -992,10 +1130,10 @@ async function startGenerate() {
     });
     currentStoryId = docRef.id;
 
-    setP(80,"Requesting video generation…");
-    // Fire and forget — saves URL to Firestore when done, never runs again
+    setP(85,"Requesting video generation\u2026");
+    /* Fire-and-forget polling — saves URL to Firestore when done */
     if (PIKA_API_KEY) {
-      generateAndSaveVideo(docRef.id, videoPrompt, selectedVideo);
+      generateAndSaveVideo(docRef.id, videoPrompt);
     }
 
     setP(100,"Done!");
@@ -1017,6 +1155,13 @@ function publishStory() {
   document.getElementById("img-grid").innerHTML = "";
   goStep(1);
   setTimeout(() => openStory(currentStoryId), 900);
+}
+
+/* ── SOCIAL SHARE ── */
+function shareStory(id, title) {
+  const url = window.location.href.split("?")[0] + "?story=" + id;
+  const waURL = "https://wa.me/?text=" + encodeURIComponent(title + " " + url);
+  window.open(waURL, "_blank");
 }
 
 /* ── PROVIDER SELECT ── */
@@ -1048,20 +1193,25 @@ function goStep(n) {
   window.scrollTo(0,0);
 }
 
-/* ── FORMAT BODY — editorial formatting without Claude ── */
-function formatBody(text, isRTL) {
+/* ══════════════════════════════════════════════════════
+   FORMAT BODY — editorial without Claude
+   ══════════════════════════════════════════════════════ */
+function formatBody(text, isRTL, theme) {
   if (!text) return "";
   const paragraphs = text.split(/\n\n|\r\n\r\n/).map(p=>p.trim()).filter(p=>p.length>0);
+  const thm = theme || getTheme("default");
   return paragraphs.map((p, i) => {
     const pRTL = /[\u0590-\u05FF\u0600-\u06FF]/.test(p);
-    const dir = pRTL ? ' dir="rtl" style="text-align:right;direction:rtl;"' : "";
+    const dir = pRTL ? " dir=\"rtl\" style=\"text-align:right;direction:rtl;\"" : "";
     const cleaned = p.replace(/\n/g," ");
-    if (i===0) return '<p class="opening-hook"'+dir+'>'+cleaned+'</p>';
+    if (i===0) return "<p class=\"hook\""+dir+">"+cleaned+"</p>";
     const sentences = cleaned.match(/[^.!?]+[.!?]+/g)||[];
     if (i%3===2 && sentences.length>=2) {
       const longest = sentences.reduce((a,b)=>b.length>a.length?b:a,"");
       const rest = cleaned.replace(longest,"").trim();
-      return (rest?"<p"+dir+">"+rest+"</p>":"")+'<div class="pull-quote"><p>'+longest.trim()+'</p></div>';
+      const pq = "<div class=\"sp-pullquote\" style=\"background:"+thm.light+";color:"+thm.accent+";\">"+
+        "<blockquote style=\"color:"+thm.bg+"\">"+longest.trim()+"</blockquote></div>";
+      return (rest?"<p"+dir+">"+rest+"</p>":"")+pq;
     }
     if (i===1||i===Math.floor(paragraphs.length/2)) {
       const words = cleaned.split(" ");
@@ -1078,10 +1228,10 @@ function startVidBar(barId) {
   if (!bar) return;
   let pct = 0;
   const iv = setInterval(() => {
-    pct = Math.min(pct+Math.random()*1.2+0.3, 92);
+    pct = Math.min(pct+Math.random()*1.5+0.4, 88);
     bar.style.width = pct+"%";
-    if (pct>=92) clearInterval(iv);
-  }, 800);
+    if (pct>=88) clearInterval(iv);
+  }, 1000);
 }
 
 function timeAgo(ts) {
@@ -1124,7 +1274,7 @@ function sendChat() {
   const d=document.createElement("div");
   d.innerHTML="<div class=\"cmsg me\">"+msg+"</div>";
   list.appendChild(d); list.scrollTop=list.scrollHeight; inp.value="";
-  const replies=["So inspiring!","Thank you ❤️","This community is incredible.","Welcome!"];
+  const replies=["So inspiring!","Thank you \u2764\uFE0F","This community is incredible.","Welcome!"];
   setTimeout(()=>{
     const r=document.createElement("div");
     r.innerHTML="<div class=\"cmsg-name\">Community</div><div class=\"cmsg them\">"+replies[Math.floor(Math.random()*replies.length)]+"</div>";
@@ -1175,15 +1325,15 @@ document.addEventListener("DOMContentLoaded",()=>{
       <div class="auth-err" id="auth-err"></div>
       <div id="auth-login">
         <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
-        <div class="field"><label>Password</label><input type="password" id="login-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div class="field"><label>Password</label><input type="password" id="login-pw" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" onkeydown="if(event.key==='Enter')doLogin()"></div>
         <button class="auth-submit" id="login-btn" onclick="doLogin()">Sign In</button>
       </div>
       <div id="auth-signup" style="display:none;">
         <div class="field"><label>Full Name</label><input type="text" id="signup-name" placeholder="Maria Reyes"></div>
         <div class="field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com"></div>
         <div class="field"><label>Password</label><input type="password" id="signup-pw" placeholder="Min 8 characters"></div>
-        <button class="auth-submit" id="signup-btn" onclick="doSignup()">Create Account — Free</button>
-        <p class="auth-note">Free plan · No credit card needed</p>
+        <button class="auth-submit" id="signup-btn" onclick="doSignup()">Create Account &#x2014; Free</button>
+        <p class="auth-note">Free plan &#xB7; No credit card needed</p>
       </div>
     </div>
   </div>
@@ -1207,12 +1357,14 @@ document.addEventListener("DOMContentLoaded",()=>{
   </div>
   <div class="feed-wrap">
     <div class="feed-main">
-      <div id="story-cards"><div class="feed-loading">Loading stories…</div></div>
+      <div id="story-cards"><div class="feed-loading">Loading stories&#x2026;</div></div>
     </div>
     <div class="feed-side">
       <div style="margin-bottom:2rem;">
         <div class="side-label">Trending this week</div>
-        <div class="trend-item"><div class="trend-n">01</div><div><div class="trend-title">Loading…</div><div class="trend-meta">—</div></div></div>
+        <div id="trend-list">
+          <div class="trend-item"><div class="trend-n">01</div><div><div class="trend-title">Loading&#x2026;</div><div class="trend-meta">&#x2014;</div></div></div>
+        </div>
       </div>
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.1rem;">
         <div style="font-family:var(--serif);font-size:1rem;margin-bottom:.4rem;">Valor Community</div>
@@ -1237,25 +1389,23 @@ document.addEventListener("DOMContentLoaded",()=>{
       <div class="step-line"></div>
       <div class="step-item" id="si4"><div class="step-num">4</div> Publish</div>
     </div>
-
     <!-- Step 1 -->
     <div id="cs1">
-      <div class="fsection"><label class="flabel">Story Title</label><input class="finput" id="s-title" placeholder="Give your story a powerful title…"></div>
+      <div class="fsection"><label class="flabel">Story Title</label><input class="finput" id="s-title" placeholder="Give your story a powerful title&#x2026;"></div>
       <div class="fsection"><label class="flabel">Category</label>
         <select class="finput" id="s-cat"><option>Rescue</option><option>Military</option><option>Everyday Heroes</option><option>Medical</option><option>Youth</option><option>Community</option><option>Survival</option></select>
       </div>
-      <div class="fsection"><label class="flabel">Your Story</label><textarea class="finput" id="s-text" placeholder="Tell us what happened. Be as detailed as you like…"></textarea></div>
-      <button class="gen-btn" onclick="goStep(2)">Continue to Images →</button>
+      <div class="fsection"><label class="flabel">Your Story</label><textarea class="finput" id="s-text" placeholder="Tell us what happened. Be as detailed as you like&#x2026;"></textarea></div>
+      <button class="gen-btn" onclick="goStep(2)">Continue to Images &#x2192;</button>
     </div>
-
     <!-- Step 2 -->
     <div id="cs2" class="hidden">
       <div class="fsection">
         <label class="flabel">Upload Images <span style="font-weight:400;text-transform:none;color:var(--text3);">(up to 12)</span></label>
         <div class="upload-zone" onclick="document.getElementById('file-in').click()">
-          <div style="font-size:2rem;margin-bottom:.6rem;">🖼️</div>
+          <div style="font-size:2rem;margin-bottom:.6rem;">&#x1F5BC;&#xFE0F;</div>
           <h4>Drop images here or click to browse</h4>
-          <p>JPG, PNG, WEBP · Max 10 MB each</p>
+          <p>JPG, PNG, WEBP &#xB7; Max 10 MB each</p>
         </div>
         <input type="file" id="file-in" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
         <div class="img-grid" id="img-grid"></div>
@@ -1263,63 +1413,61 @@ document.addEventListener("DOMContentLoaded",()=>{
       <label class="flabel">Image Storage</label>
       <div class="provider-block">
         <div class="provider-default">
-          <div class="provider-icon" style="background:#fdf3e8;">☁️</div>
-          <div class="provider-text"><h4>Cloudinary <span class="rec-badge">Recommended · Free</span></h4><p>Free 25 GB · Optimised for images and video</p></div>
+          <div class="provider-icon" style="background:#fdf3e8;">&#x2601;&#xFE0F;</div>
+          <div class="provider-text"><h4>Cloudinary <span class="rec-badge">Recommended &#xB7; Free</span></h4><p>Free 25 GB &#xB7; Optimised for images and video</p></div>
           <button class="adv-toggle" id="storage-toggle" onclick="toggleAdv('storage')">Advanced <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
         </div>
         <div class="adv-panel" id="storage-adv">
           <div class="adv-title">Choose storage provider</div>
           <div class="adv-opts">
-            <div class="adv-opt sel" onclick="selectOpt(this,'storage','cloudinary')"><h5>Cloudinary <span class="free-tag">Free</span></h5><p>25 GB · Best for media</p></div>
-            <div class="adv-opt" onclick="selectOpt(this,'storage','firebase')"><h5>Firebase Storage <span class="free-tag">Free</span></h5><p>5 GB · Google infrastructure</p></div>
+            <div class="adv-opt sel" onclick="selectOpt(this,'storage','cloudinary')"><h5>Cloudinary <span class="free-tag">Free</span></h5><p>25 GB &#xB7; Best for media</p></div>
+            <div class="adv-opt" onclick="selectOpt(this,'storage','firebase')"><h5>Firebase Storage <span class="free-tag">Free</span></h5><p>5 GB &#xB7; Google infrastructure</p></div>
             <div class="adv-opt" onclick="selectOpt(this,'storage','github')"><h5>GitHub Repo <span class="free-tag">Free</span></h5><p>Your existing GitHub account</p></div>
             <div class="adv-opt" onclick="selectOpt(this,'storage','s3')"><h5>Amazon S3 <span class="paid-tag">Paid</span></h5><p>Enterprise scale</p></div>
           </div>
-          <div class="key-row show" id="storage-key-row"><label>Cloudinary Cloud Name</label><input type="text" id="cloudinary-cloud" placeholder="your-cloud-name" oninput="document.getElementById('cloudinary-cloud').value=this.value"></div>
+          <div class="key-row show" id="storage-key-row"><label>Cloudinary Cloud Name</label><input type="text" id="cloudinary-cloud" placeholder="your-cloud-name"></div>
         </div>
       </div>
       <div style="display:flex;gap:10px;margin-top:1rem;">
-        <button class="back-btn" onclick="goStep(1)">← Back</button>
-        <button class="gen-btn" onclick="goStep(3)">Continue to Video →</button>
+        <button class="back-btn" onclick="goStep(1)">&#x2190; Back</button>
+        <button class="gen-btn" onclick="goStep(3)">Continue to Video &#x2192;</button>
       </div>
     </div>
-
     <!-- Step 3 -->
     <div id="cs3" class="hidden">
       <label class="flabel">AI Video Provider</label>
       <div class="provider-block">
         <div class="provider-default">
-          <div class="provider-icon" style="background:#edf7f2;">🎬</div>
-          <div class="provider-text"><h4>Pika Labs <span class="rec-badge">Recommended · Free trial</span></h4><p>Free credits on signup · Valor sends your story prompt automatically</p></div>
+          <div class="provider-icon" style="background:#edf7f2;">&#x1F3AC;</div>
+          <div class="provider-text"><h4>Pika Labs <span class="rec-badge">Recommended &#xB7; Free trial</span></h4><p>Free credits on signup &#xB7; Valor sends your story prompt automatically</p></div>
           <button class="adv-toggle" id="video-toggle" onclick="toggleAdv('video')">Advanced <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
         </div>
         <div class="adv-panel" id="video-adv">
           <div class="adv-title">Choose AI video provider</div>
           <div class="adv-opts">
-            <div class="adv-opt sel" onclick="selectOpt(this,'video','pika')"><h5>Pika Labs <span class="free-tag">Free trial</span></h5><p>Sign up at pika.art · Paste API key below</p></div>
-            <div class="adv-opt" onclick="selectOpt(this,'video','runway')"><h5>Runway ML <span class="free-tag">Free trial</span></h5><p>125 free credits · runwayml.com</p></div>
-            <div class="adv-opt" onclick="selectOpt(this,'video','kling')"><h5>Kling AI <span class="free-tag">Free tier</span></h5><p>66 credits/day · klingai.com</p></div>
-            <div class="adv-opt" onclick="selectOpt(this,'video','valor')"><h5>Valor Credits <span class="paid-tag">Pay per video</span></h5><p>We handle everything · coming soon</p></div>
+            <div class="adv-opt sel" onclick="selectOpt(this,'video','pika')"><h5>Pika Labs <span class="free-tag">Free trial</span></h5><p>Sign up at pika.art &#xB7; Paste API key below</p></div>
+            <div class="adv-opt" onclick="selectOpt(this,'video','runway')"><h5>Runway ML <span class="free-tag">Free trial</span></h5><p>125 free credits &#xB7; runwayml.com</p></div>
+            <div class="adv-opt" onclick="selectOpt(this,'video','kling')"><h5>Kling AI <span class="free-tag">Free tier</span></h5><p>66 credits/day &#xB7; klingai.com</p></div>
+            <div class="adv-opt" onclick="selectOpt(this,'video','valor')"><h5>Valor Credits <span class="paid-tag">Pay per video</span></h5><p>We handle everything &#xB7; coming soon</p></div>
           </div>
-          <div class="key-row show" id="video-key-row"><label>Pika Labs API Key — get it at pika.art/account</label><input type="text" id="pika-key" placeholder="pk-xxxxxxxxxxxxxxxx"></div>
+          <div class="key-row show" id="video-key-row"><label>Pika Labs API Key &#x2014; get it at pika.art/account</label><input type="text" id="pika-key" placeholder="pk-xxxxxxxxxxxxxxxx"></div>
         </div>
       </div>
       <div style="margin-top:1.5rem;padding:1.2rem 1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);">
         <div style="font-size:.78rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem;">How your video prompt is created</div>
-        <p style="font-size:.84rem;color:var(--text2);line-height:1.6;">Your story is sent to Claude, which uses Valor's editorial bravery template — cinematic pacing, authentic emotion, no clichés — and writes a precise video prompt. That prompt goes directly to your chosen AI video provider.</p>
+        <p style="font-size:.84rem;color:var(--text2);line-height:1.6;">Your story is sent to Claude, which uses Valor's editorial bravery template &#x2014; cinematic pacing, authentic emotion, no clich&#xE9;s &#x2014; and writes a precise video prompt. That prompt goes directly to your chosen AI video provider.</p>
       </div>
       <div style="display:flex;gap:10px;margin-top:1.25rem;">
-        <button class="back-btn" onclick="goStep(2)">← Back</button>
-        <button class="gen-btn" id="gen-btn-main" onclick="startGenerate()">Generate My Video Story →</button>
+        <button class="back-btn" onclick="goStep(2)">&#x2190; Back</button>
+        <button class="gen-btn" id="gen-btn-main" onclick="startGenerate()">Generate My Video Story &#x2192;</button>
       </div>
     </div>
-
     <!-- Step 4 -->
     <div id="cs4" class="hidden">
       <div class="gen-state" id="gen-running">
         <div class="spinner"></div>
         <h3 style="font-family:var(--serif);font-size:1.5rem;margin-bottom:.4rem;">Creating your story</h3>
-        <p id="gen-status" style="color:var(--text2);font-size:.875rem;">Starting…</p>
+        <p id="gen-status" style="color:var(--text2);font-size:.875rem;">Starting&#x2026;</p>
         <div class="prog-wrap"><div class="prog-fill" id="prog-fill"></div></div>
         <p id="prog-pct" style="font-size:.75rem;color:var(--text3);">0%</p>
       </div>
@@ -1328,7 +1476,7 @@ document.addEventListener("DOMContentLoaded",()=>{
         <h3 style="font-family:var(--serif);font-size:1.85rem;margin-bottom:.4rem;">Your story is live!</h3>
         <p style="color:var(--text2);margin-bottom:1.5rem;">Your story has been saved and published to Valor.</p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <button class="gen-btn" style="width:auto;padding:11px 22px;" onclick="publishStory()">View My Story →</button>
+          <button class="gen-btn" style="width:auto;padding:11px 22px;" onclick="publishStory()">View My Story &#x2192;</button>
           <button class="gen-btn" style="width:auto;padding:11px 22px;background:var(--text);" onclick="showPage('feed')">Back to Feed</button>
         </div>
       </div>
@@ -1338,17 +1486,15 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 <!-- STORY VIEW PAGE -->
 <div class="page" id="page-story">
-  <div class="story-wrap">
-    <div id="story-content-area"><div class="feed-loading">Loading…</div></div>
-    <div class="comments">
-      <h3>Comments</h3>
-      <div class="cmt-input-row">
-        <div class="av" style="background:var(--bg3);color:var(--text2);font-weight:600;font-size:.75rem;">You</div>
-        <textarea class="cmt-box" id="new-cmt" placeholder="Share your thoughts on this story…"></textarea>
-        <button class="cmt-post" id="cmt-post-btn" onclick="addComment()">Post</button>
-      </div>
-      <div id="cmt-list"></div>
+  <div id="story-content-area"><div class="feed-loading" style="padding:6rem 2rem;">Loading&#x2026;</div></div>
+  <div class="comments">
+    <h3>Comments</h3>
+    <div class="cmt-input-row">
+      <div class="av" style="background:var(--bg3);color:var(--text2);font-weight:600;font-size:.75rem;">You</div>
+      <textarea class="cmt-box" id="new-cmt" placeholder="Share your thoughts on this story&#x2026;"></textarea>
+      <button class="cmt-post" id="cmt-post-btn" onclick="addComment()">Post</button>
     </div>
+    <div id="cmt-list"></div>
   </div>
 </div>
 
@@ -1358,11 +1504,10 @@ document.addEventListener("DOMContentLoaded",()=>{
   <div class="prof-body">
     <div class="prof-av-wrap"><span id="prof-initials">?</span></div>
     <div class="prof-meta">
-      <!-- VIEW MODE -->
       <div id="prof-view-mode">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <div class="prof-name" id="prof-name">Loading…</div>
-          <button onclick="toggleEditProfile()" style="padding:4px 12px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;background:white;cursor:pointer;color:var(--text2);">✏️ Edit Profile</button>
+          <div class="prof-name" id="prof-name">Loading&#x2026;</div>
+          <button onclick="toggleEditProfile()" style="padding:4px 12px;border:1px solid var(--border);border-radius:6px;font-size:.78rem;background:white;cursor:pointer;color:var(--text2);">&#x270F;&#xFE0F; Edit Profile</button>
         </div>
         <div id="prof-bio-display" style="color:var(--text2);font-size:.875rem;margin-top:.4rem;line-height:1.5;"></div>
         <div style="color:var(--text3);font-size:.78rem;margin-top:.3rem;" id="prof-email"></div>
@@ -1376,7 +1521,6 @@ document.addEventListener("DOMContentLoaded",()=>{
           <button class="btn-msg" style="color:var(--accent);border-color:var(--accent-light);" onclick="confirmDeleteAccount()">Delete Account</button>
         </div>
       </div>
-      <!-- EDIT MODE -->
       <div id="prof-edit-mode" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-top:1rem;max-width:480px;">
         <div style="font-family:var(--serif);font-size:1.1rem;margin-bottom:1.25rem;">Edit Profile</div>
         <div class="field" style="margin-bottom:1rem;">
@@ -1385,7 +1529,7 @@ document.addEventListener("DOMContentLoaded",()=>{
         </div>
         <div class="field" style="margin-bottom:1rem;">
           <label style="font-size:.75rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:6px;">Bio</label>
-          <textarea id="edit-bio" class="finput" style="min-height:80px;" placeholder="Tell the community about yourself…"></textarea>
+          <textarea id="edit-bio" class="finput" style="min-height:80px;" placeholder="Tell the community about yourself&#x2026;"></textarea>
         </div>
         <div class="field" style="margin-bottom:1.25rem;">
           <label style="font-size:.75rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:6px;">New Password <span style="font-weight:400;text-transform:none;">(leave blank to keep current)</span></label>
@@ -1408,13 +1552,13 @@ document.addEventListener("DOMContentLoaded",()=>{
 <div class="chat-panel" id="chat-panel">
   <div class="chat-hdr">
     <div><h4>Community Chat</h4><div class="chat-online"><div class="online-dot"></div>Live</div></div>
-    <button class="chat-close" onclick="closeChatPanel()">✕</button>
+    <button class="chat-close" onclick="closeChatPanel()">&#x2715;</button>
   </div>
   <div class="chat-msgs" id="chat-msgs">
-    <div><div class="cmsg-name">Valor</div><div class="cmsg them">Welcome to Valor community chat! Share thoughts on any story. 🌟</div></div>
+    <div><div class="cmsg-name">Valor</div><div class="cmsg them">Welcome to Valor community chat! Share thoughts on any story. &#x1F31F;</div></div>
   </div>
   <div class="chat-inp-row">
-    <input class="chat-inp" id="chat-inp" placeholder="Say something…" onkeydown="if(event.key==='Enter')sendChat()">
+    <input class="chat-inp" id="chat-inp" placeholder="Say something&#x2026;" onkeydown="if(event.key==='Enter')sendChat()">
     <button class="chat-send" onclick="sendChat()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
   </div>
 </div>
