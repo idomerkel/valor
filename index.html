@@ -539,28 +539,17 @@ function renderStory(id, s) {
     videoHTML = `<div style="margin:0 2rem 2.5rem;background:linear-gradient(145deg,#160806,#2d1410);border-radius:14px;padding:2rem 1.5rem;text-align:center;">
       <div style="width:52px;height:52px;border:3px solid rgba(255,255,255,.15);border-top-color:#c0392b;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;"></div>
       <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:white;margin-bottom:.4rem;">Video is being generated</div>
-      <div style="font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:1.25rem;">Processing with ${s.videoProvider || "Pika Labs"} — usually takes 2–5 minutes</div>
+      <div style="font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:1.25rem;">Processing with ${s.videoProvider || "Pika Labs"} — usually takes 2-5 minutes</div>
       <div style="height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;max-width:320px;margin:0 auto .6rem;">
         <div id="${vidId}" style="height:100%;background:#c0392b;border-radius:2px;width:0;transition:width .6s ease;"></div>
       </div>
       <div style="font-size:.75rem;color:rgba(255,255,255,.35);">Refresh the page in a few minutes to see your video</div>
-      <script>
-        (function(){
-          var bar = document.getElementById('${vidId}');
-          if(!bar) return;
-          var pct = 0;
-          var iv = setInterval(function(){
-            pct = Math.min(pct + Math.random()*1.2 + 0.3, 92);
-            bar.style.width = pct + '%';
-            if(pct >= 92) clearInterval(iv);
-          }, 800);
-        })();
-      <\/script>
     </div>`;
+    setTimeout(() => startVidBar(vidId), 200);
   }
 
   const bodyRTL = /[֐-׿؀-ۿ]/.test(s.body || s.title || "");
-  const rtlAttr = bodyRTL ? " dir="rtl" style="text-align:right;direction:rtl;"" : "";
+  const rtlAttr = bodyRTL ? ' dir="rtl" style="text-align:right;direction:rtl;"' : '';
   document.getElementById("story-content-area").innerHTML = `
     <div class="story-hdr">
       <div class="s-cat-tag">${s.category || "Bravery Story"}</div>
@@ -829,6 +818,17 @@ window.selectOpt = function(el, name, val) {
 window.copyLink = function(id) {
   navigator.clipboard.writeText(window.location.href.split("?")[0]+"?story="+id).then(()=>showToast("Link copied!")).catch(()=>showToast("Link copied!"));
 };
+
+function startVidBar(vidId) {
+  const bar = document.getElementById(vidId);
+  if (!bar) return;
+  let pct = 0;
+  const iv = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 1.2 + 0.3, 92);
+    bar.style.width = pct + '%';
+    if (pct >= 92) clearInterval(iv);
+  }, 800);
+}
 
 function timeAgo(ts) {
   if (!ts) return "recently";
