@@ -371,6 +371,8 @@ const CLOUDINARY_CLOUD = "dezy82ghg";
 const CLOUDINARY_PRESET = "valor_upload";
 const PIKA_API_KEY = "";
 const ANTHROPIC_KEY = "";
+/* Unsplash — free, no key needed for source.unsplash.com */
+const UNSPLASH_ENABLED = true;
 
 /* ── CATEGORY THEMES ── */
 const THEMES = {
@@ -607,20 +609,23 @@ function renderStory(id, s) {
     "</div>";
   }
 
-  /* Video block */
+  /* Video block — always shown */
   let videoHTML = "";
   if (s.videoURL) {
+    /* Real video — play it */
     videoHTML =
       "<div class=\"sp-video-block\">"+
-        "<div class=\"sp-video-wrap\">"+
-          "<video controls playsinline preload=\"metadata\" style=\"width:100%;height:100%;display:block;object-fit:cover;\">"+
+        "<div class=\"sp-video-wrap\" style=\"background:#060606;\">"+
+          "<video id=\"story-video-"+id+"\" controls playsinline preload=\"metadata\" style=\"width:100%;height:100%;display:block;object-fit:contain;\">"+
             "<source src=\""+s.videoURL+"\" type=\"video/mp4\">"+
+            "<source src=\""+s.videoURL+"\" type=\"video/webm\">"+
             "Your browser does not support this video."+
           "</video>"+
         "</div>"+
-        "<div class=\"sp-video-label\">AI-generated video \u00b7 "+s.videoDuration+"</div>"+
+        "<div class=\"sp-video-label\">AI-generated video"+(s.videoDuration?" \u00b7 "+s.videoDuration:"")+"</div>"+
       "</div>";
   } else if (s.videoGenerating) {
+    /* Actively generating — show progress */
     videoHTML =
       "<div class=\"sp-video-block\">"+
         "<div class=\"sp-video-wrap\" style=\"background:"+theme.bg+";\">"+
@@ -638,6 +643,33 @@ function renderStory(id, s) {
         "</div>"+
       "</div>";
     setTimeout(() => startVidBar("vbar_"+id), 300);
+  } else if (PIKA_API_KEY && currentUser && s.authorId === (currentUser && currentUser.uid)) {
+    /* Story owner + Pika key available — show generate button */
+    videoHTML =
+      "<div class=\"sp-video-block\">"+
+        "<div class=\"sp-video-wrap\" style=\"background:"+theme.bg+";cursor:pointer;\" onclick=\"triggerVideoGeneration('"+id+"')\">"+
+          "<div class=\"sp-video-generating\">"+
+            "<div style=\"width:64px;height:64px;border-radius:50%;background:"+theme.accent+";display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 8px 32px rgba(0,0,0,.4);\">"+
+              "<svg width=\"26\" height=\"26\" viewBox=\"0 0 24 24\" fill=\"white\"><path d=\"M8 5v14l11-7z\"/></svg>"+
+            "</div>"+
+            "<div class=\"sp-vid-title\">Generate AI video</div>"+
+            "<div class=\"sp-vid-sub\">Click to create a cinematic video for this story</div>"+
+            "<div style=\"margin-top:1rem;padding:8px 20px;background:"+theme.accent+";border:none;border-radius:100px;font-size:.82rem;font-weight:600;color:white;display:inline-block;\">Generate now</div>"+
+          "</div>"+
+        "</div>"+
+      "</div>";
+  } else {
+    /* No video, no key, or not owner — show atmospheric placeholder */
+    videoHTML =
+      "<div class=\"sp-video-block\">"+
+        "<div class=\"sp-video-wrap\" style=\"background:linear-gradient(145deg,"+theme.bg+",#0a0404);\">"+
+          "<div class=\"sp-video-generating\">"+
+            "<div style=\"font-size:2.5rem;margin-bottom:.75rem;opacity:.4;\">&#x1F3AC;</div>"+
+            "<div class=\"sp-vid-title\" style=\"opacity:.7;\">Video coming soon</div>"+
+            "<div class=\"sp-vid-sub\">AI-generated video will appear here</div>"+
+          "</div>"+
+        "</div>"+
+      "</div>";
   }
 
   /* Prose body */
@@ -675,11 +707,10 @@ function renderStory(id, s) {
       "</div>"+
     "</div>"+
     /* BODY */
-    "<div class=\"sp-body\">"+
+    "<div class=\"sp-body\" id=\"sp-body-"+id+"\">"+
       videoHTML+
-      (imgs.length>0&&!imgs[0]?mosaicHTML:"")+
       "<div class=\"sp-prose-wrap\"><div class=\"sp-prose\""+rtlAttr+">"+bodyHTML+"</div></div>"+
-      (imgs.length>1?mosaicHTML:"")+
+      (imgs.length>0 ? mosaicHTML : "<div id=\"auto-imgs-"+id+"\"></div>")+
       "<div class=\"sp-share-strip\">"+
         "<span class=\"sp-share-label\">Share</span>"+
         "<button class=\"sp-share-btn wa\" onclick=\"window.open('"+waURL+"','_blank')\">WhatsApp</button>"+
@@ -688,12 +719,87 @@ function renderStory(id, s) {
       "</div>"+
     "</div>";
 
-  /* Tint the hero if image was used — pull quote colors applied after render */
-  document.querySelectorAll(".sp-pullquote").forEach(q => {
-    q.style.background = theme.light;
-    q.style.color = theme.accent;
-    q.querySelector("blockquote").style.color = theme.bg;
-  });
+  /* Auto-fetch images from Unsplash if no user images */
+  if (imgs.length === 0 && UNSPLASH_ENABLED) {
+    autoFetchImages(id, s.title, s.category, s.body||"");
+  }
+}
+
+/* ── AUTO-FETCH IMAGES FROM UNSPLASH ── */
+async function autoFetchImages(storyId, title, category, body) {
+  const container = document.getElementById("auto-imgs-"+storyId);
+  if (!container) return;
+
+  /* Build search query from title + category keywords */
+  const catKeywords = {
+    "Rescue": "rescue hero emergency",
+    "Military": "military soldier service",
+    "Medical": "medical hospital doctor",
+    "Everyday Heroes": "community people helping",
+    "Youth": "young person courage",
+    "Community": "community neighborhood people",
+    "Survival": "nature survival wilderness",
+    "default": "courage hero bravery"
+  };
+  const baseKw = catKeywords[category] || catKeywords["default"];
+  /* Use first 3 meaningful words from title */
+  const titleWords = title.replace(/[^a-zA-Z\u0590-\u05FF\s]/g,"").split(/\s+/).slice(0,3).join(" ");
+  const query = encodeURIComponent(titleWords + " " + baseKw);
+
+  /* Unsplash source API — no key needed, returns random relevant image */
+  const w = 800, h = 500;
+  const imgs = [
+    "https://source.unsplash.com/"+w+"x"+h+"/?"+query+"&sig=1",
+    "https://source.unsplash.com/"+w+"x"+h+"/?"+query+"&sig=2",
+    "https://source.unsplash.com/"+w+"x"+h+"/?"+query+"&sig=3",
+    "https://source.unsplash.com/400x400/?"+query+"&sig=4",
+    "https://source.unsplash.com/400x400/?"+query+"&sig=5"
+  ];
+
+  container.innerHTML =
+    "<div class=\"sp-mosaic\">"+
+      "<div style=\"font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.75rem;\">Related imagery</div>"+
+      "<div class=\"sp-mosaic-3\">"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[0]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.parentNode.style.display='none'\"></div>"+
+        "<div class=\"sp-mosaic-col\">"+
+          "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[1]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.parentNode.style.display='none'\"></div>"+
+          "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[2]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.parentNode.style.display='none'\"></div>"+
+        "</div>"+
+      "</div>"+
+      "<div class=\"sp-mosaic-2\" style=\"margin-top:10px;\">"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[3]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.parentNode.style.display='none'\"></div>"+
+        "<div class=\"sp-mosaic-cell\"><img src=\""+imgs[4]+"\" alt=\"\" loading=\"lazy\" onerror=\"this.parentNode.style.display='none'\"></div>"+
+      "</div>"+
+      "<div class=\"sp-img-caption\">Images sourced from Unsplash</div>"+
+    "</div>";
+}
+
+/* ── TRIGGER VIDEO GENERATION ON DEMAND ── */
+async function triggerVideoGeneration(storyId) {
+  if (!PIKA_API_KEY) { showToast("Add your Pika API key to generate videos."); return; }
+  if (!currentUser) { showModal("Sign in required","You need to be signed in to generate a video."); return; }
+
+  /* Mark as generating in Firestore */
+  try {
+    await db.collection("stories").doc(storyId).update({
+      videoGenerating: true,
+      videoProvider: "pika"
+    });
+  } catch(e) { showToast("Couldn't start video generation."); return; }
+
+  /* Re-render the story to show spinner */
+  const snap = await db.collection("stories").doc(storyId).get();
+  if (!snap.exists) return;
+  renderStory(storyId, snap.data());
+  loadComments(storyId);
+
+  /* Get the video prompt */
+  const s = snap.data();
+  const videoPrompt = s.videoPrompt || await generateVideoPrompt(s.title, s.category, s.body||"");
+
+  /* Start generation */
+  showToast("Video generation started! Check back in a few minutes.");
+  generateAndSaveVideo(storyId, videoPrompt);
 }
 
 /* ── LIKES ── */
