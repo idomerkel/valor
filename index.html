@@ -670,10 +670,7 @@ async function generateVideoPrompt(title, category, body) {
       headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
       body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,
         system:"You are Valor editorial AI. Transform a bravery story into a precise cinematic video prompt (90-120 words). Vivid imagery, no clichés, documentary style. Output ONLY the prompt.",
-        messages:[{role:"user",content:"Title: "+title+"
-Category: "+category+"
-Story:
-"+body.slice(0,800)}]})
+        messages:[{role:"user",content:"Title: "+title+"\nCategory: "+category+"\nStory:\n"+body.slice(0,800)}]})
     });
     const data = await res.json();
     return data.content?.[0]?.text || "";
