@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valor — Bravery Stories</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#ffffff; --bg2:#f8f7f4; --bg3:#f0efe9;
+  --text:#111111; --text2:#555550; --text3:#99998f;
+  --border:#e5e4de; --border2:#d0cfc8;
+  --accent:#c0392b; --accent-hover:#a93226; --accent-light:#fdf0ef; --accent-mid:#e8a090;
+  --gold:#b5860d; --gold-light:#fdf8ed;
+  --green:#1a7a4a; --green-light:#edf7f2;
+  --blue:#1a5fa8; --blue-light:#edf3fb;
+  --radius:14px; --radius-sm:9px; --radius-xs:6px;
+  --shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);
+  --shadow-md:0 4px 20px rgba(0,0,0,.08);
+  --shadow-lg:0 12px 48px rgba(0,0,0,.12);
+  --serif:'DM Serif Display',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+  --transition:all .18s cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
+button,input,textarea,select{font-family:var(--sans);}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1.75rem;height:58px;}
+.nav-logo{font-family:var(--serif);font-size:1.45rem;color:var(--text);display:flex;align-items:center;gap:9px;cursor:pointer;text-decoration:none;}
+.logo-mark{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-mark svg{width:16px;height:16px;fill:white;}
+.nav-links{display:flex;align-items:center;gap:2px;}
+.nav-btn{padding:6px 14px;border-radius:8px;font-size:.875rem;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:none;transition:var(--transition);}
+.nav-btn:hover{background:var(--bg2);color:var(--text);}
+.nav-btn.active{background:var(--accent-light);color:var(--accent);}
+.nav-cta{padding:7px 18px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:.875rem;font-weight:500;cursor:pointer;transition:var(--transition);}
+.nav-cta:hover{background:var(--accent-hover);}
+
+/* ── PAGES ── */
+.page{display:none;min-height:calc(100vh - 58px);}
+.page.active{display:block;}
+
+/* ── AUTH PAGE ── */
+.auth-wrap{min-height:calc(100vh - 58px);display:flex;align-items:center;justify-content:center;padding:2rem;background:var(--bg2);}
+.auth-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem;width:100%;max-width:420px;box-shadow:var(--shadow-md);}
+.auth-card h2{font-family:var(--serif);font-size:2rem;letter-spacing:-.02em;margin-bottom:.25rem;}
+.auth-card p{color:var(--text2);font-size:.9rem;margin-bottom:2rem;line-height:1.5;}
+.auth-tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius-xs);padding:3px;margin-bottom:1.75rem;background:var(--bg2);}
+.auth-tab{flex:1;padding:7px;border:none;background:none;border-radius:5px;font-size:.875rem;font-weight:500;color:var(--text2);cursor:pointer;transition:var(--transition);}
+.auth-tab.active{background:white;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.field{margin-bottom:1.1rem;}
+.field label{display:block;font-size:.8rem;font-weight:600;color:var(--text2);letter-spacing:.03em;text-transform:uppercase;margin-bottom:6px;}
+.field input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:.95rem;color:var(--text);outline:none;transition:border-color .15s;background:white;}
+.field input:focus{border-color:var(--accent);}
+.auth-submit{width:100%;padding:12px;background:var(--accent);color:white;border:none;border-radius:var(--radius-xs);font-size:1rem;font-weight:500;cursor:pointer;transition:var(--transition);margin-top:.5rem;}
+.auth-submit:hover{background:var(--accent-hover);}
+.auth-divider{text-align:center;font-size:.8rem;color:var(--text3);margin:1.25rem 0;position:relative;}
+.auth-divider::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border);}
+.auth-divider span{background:white;padding:0 .75rem;position:relative;}
+.auth-err{background:#fdf0ef;border:1px solid #f0b0a5;border-radius:var(--radius-xs);padding:10px 14px;font-size:.85rem;color:var(--accent-hover);margin-bottom:1rem;display:none;}
+
+/* ── PLAN BADGE ── */
+.plan-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;}
+.plan-free{background:var(--bg3);color:var(--text2);}
+.plan-pro{background:var(--gold-light);color:var(--gold);}
+
+/* ── FEED ── */
+.feed-hero{background:linear-gradient(140deg,#160806 0%,#2a1008 55%,#160806 100%);padding:5rem 2rem 4rem;text-align:center;position:relative;overflow:hidden;}
+.feed-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 60%,rgba(192,57,43,.25),transparent 60%),radial-gradient(ellipse at 70% 30%,rgba(181,134,13,.1),transparent 50%);}
+.feed-hero h1{font-family:var(--serif);font-size:clamp(2.4rem,6vw,4.5rem);color:white;line-height:1.08;margin-bottom:1rem;letter-spacing:-.025em;position:relative;}
+.feed-hero h1 em{color:var(--accent-mid);font-style:italic;}
+.feed-hero p{color:rgba(255,255,255,.55);font-size:1.05rem;max-width:460px;margin:0 auto 2rem;font-weight:300;line-height:1.65;position:relative;}
+.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;position:relative;}
+.btn-red{padding:11px 24px;background:var(--accent);color:white;border:none;border-radius:9px;font-size:.9rem;font-weight:500;cursor:pointer;transition:var(--transition);}
+.btn-red:hover{background:var(--accent-hover);transform:translateY(-1px);}
+.btn-outline-white{padding:11px 24px;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.22);border-radius:9px;font-size:.9rem;font-weight:500;cursor:pointer;transition:var(--transition);}
+.btn-outline-white:hover{background:rgba(255,255,255,.18);}
+
+.feed-bar{display:flex;align-items:center;gap:8px;padding:1.1rem 2rem;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.chip{padding:5px 14px;border-radius:100px;font-size:.8rem;font-weight:500;border:1px solid var(--border);background:white;color:var(--text2);cursor:pointer;white-space:nowrap;transition:var(--transition);}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.on{background:var(--accent);color:white;border-color:var(--accent);}
+
+.feed-wrap{display:flex;max-width:1200px;margin:0 auto;}
+.feed-main{flex:1;padding:2rem;max-width:760px;}
+.feed-side{width:296px;flex-shrink:0;padding:2rem 2rem 2rem 0;border-left:1px solid var(--border);display:none;}
+@media(min-width:1060px){.feed-wrap{margin:0 auto;}.feed-main{margin:0;}.feed-side{display:block;}}
+
+/* ── STORY CARD ── */
+.scard{background:white;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.5rem;transition:box-shadow .2s;}
+.scard:hover{box-shadow:var(--shadow-lg);}
+.scard-media{position:relative;height:216px;background:linear-gradient(145deg,#160806,#3a1912);overflow:hidden;cursor:pointer;}
+.scard-media-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:4rem;color:rgba(255,255,255,.06);}
+.play-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,.3);transition:transform .15s;}
+.play-ring:hover{transform:translate(-50%,-50%) scale(1.1);}
+.play-ring svg{width:18px;height:18px;fill:var(--accent);margin-left:2px;}
+.dur-tag{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.68);color:white;font-size:.72rem;font-weight:500;padding:3px 8px;border-radius:4px;}
+.cat-tag{position:absolute;top:10px;left:10px;background:var(--accent);color:white;font-size:.68rem;font-weight:600;padding:4px 10px;border-radius:100px;text-transform:uppercase;letter-spacing:.05em;}
+.scard-body{padding:1.2rem 1.4rem;}
+.scard-author{display:flex;align-items:center;gap:9px;margin-bottom:.7rem;}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;color:white;flex-shrink:0;}
+.scard-title{font-family:var(--serif);font-size:1.22rem;line-height:1.28;color:var(--text);cursor:pointer;letter-spacing:-.01em;margin-bottom:.4rem;}
+.scard-title:hover{color:var(--accent);}
+.scard-exc{font-size:.875rem;color:var(--text2);line-height:1.6;margin-bottom:.9rem;}
+.scard-actions{display:flex;border-top:1px solid var(--border);margin:0 -1.4rem;margin-top:.9rem;}
+.scard-act{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 0;font-size:.78rem;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:none;transition:var(--transition);border-right:1px solid var(--border);}
+.scard-act:last-child{border-right:none;}
+.scard-act:hover{background:var(--bg2);color:var(--text);}
+.scard-act.liked{color:var(--accent);}
+.scard-act svg{width:15px;height:15px;}
+
+/* ── SIDEBAR ── */
+.side-label{font-size:.72rem;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.9rem;}
+.trend-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.trend-item:last-child{border-bottom:none;}
+.trend-n{font-size:1.1rem;font-weight:300;color:var(--border2);min-width:22px;}
+.trend-item:hover .trend-n{color:var(--accent);}
+.trend-title{font-size:.85rem;font-weight:500;line-height:1.3;}
+.trend-meta{font-size:.72rem;color:var(--text3);margin-top:2px;}
+
+/* ── CREATE PAGE ── */
+.create-wrap{max-width:820px;margin:0 auto;padding:3rem 2rem;}
+.create-wrap h2{font-family:var(--serif);font-size:2.5rem;letter-spacing:-.025em;margin-bottom:.4rem;}
+.create-wrap>p{color:var(--text2);margin-bottom:2.5rem;}
+
+/* Step indicator */
+.steps{display:flex;align-items:center;margin-bottom:2.5rem;}
+.step-item{display:flex;align-items:center;gap:8px;font-size:.8rem;font-weight:500;color:var(--text3);}
+.step-item.on{color:var(--accent);}
+.step-item.done{color:var(--text);}
+.step-num{width:24px;height:24px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;}
+.step-item.on .step-num{background:var(--accent);color:white;border-color:var(--accent);}
+.step-item.done .step-num{background:var(--text);color:white;border-color:var(--text);}
+.step-line{flex:1;height:1px;background:var(--border);margin:0 6px;}
+
+/* Form */
+.flabel{font-size:.78rem;font-weight:600;color:var(--text2);letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:7px;}
+.finput{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:.95rem;color:var(--text);outline:none;transition:border-color .15s;background:white;}
+.finput:focus{border-color:var(--accent);}
+textarea.finput{min-height:160px;resize:vertical;line-height:1.65;}
+.fsection{margin-bottom:1.75rem;}
+
+/* Upload */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:2.5rem 2rem;text-align:center;cursor:pointer;transition:var(--transition);background:var(--bg2);}
+.upload-zone:hover{border-color:var(--accent);background:var(--accent-light);}
+.upload-zone h4{font-size:.95rem;font-weight:500;margin-bottom:.2rem;}
+.upload-zone p{font-size:.78rem;color:var(--text3);}
+.img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:7px;margin-top:.9rem;}
+.img-thumb{aspect-ratio:1;border-radius:8px;background:var(--bg3);overflow:hidden;position:relative;}
+.img-thumb img{width:100%;height:100%;object-fit:cover;}
+.img-rm{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:white;border:none;cursor:pointer;font-size:.65rem;display:flex;align-items:center;justify-content:center;}
+
+/* ── PROVIDER SELECTOR — the key UX ── */
+.provider-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.75rem;}
+.provider-default{padding:1.2rem 1.5rem;display:flex;align-items:center;gap:14px;}
+.provider-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+.provider-text h4{font-size:.95rem;font-weight:500;color:var(--text);margin-bottom:2px;}
+.provider-text p{font-size:.8rem;color:var(--text2);line-height:1.4;}
+.provider-rec{background:var(--green-light);color:var(--green);font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:100px;letter-spacing:.04em;text-transform:uppercase;margin-left:6px;}
+.provider-adv-toggle{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text3);cursor:pointer;border:none;background:none;padding:0;white-space:nowrap;}
+.provider-adv-toggle svg{width:14px;height:14px;transition:transform .2s;}
+.provider-adv-toggle.open svg{transform:rotate(180deg);}
+.provider-adv-panel{border-top:1px solid var(--border);padding:1.2rem 1.5rem;display:none;background:white;}
+.provider-adv-panel.open{display:block;}
+.adv-title{font-size:.72rem;font-weight:600;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:.9rem;}
+.adv-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.adv-opt{border:1.5px solid var(--border);border-radius:var(--radius-xs);padding:.8rem 1rem;cursor:pointer;transition:var(--transition);background:white;position:relative;}
+.adv-opt:hover{border-color:var(--accent);background:var(--accent-light);}
+.adv-opt.selected{border-color:var(--accent);background:var(--accent-light);}
+.adv-opt.selected::after{content:'✓';position:absolute;top:6px;right:8px;font-size:.75rem;color:var(--accent);font-weight:700;}
+.adv-opt h5{font-size:.85rem;font-weight:500;color:var(--text);margin-bottom:2px;}
+.adv-opt p{font-size:.75rem;color:var(--text2);}
+.adv-opt .free-tag{font-size:.65rem;background:var(--green-light);color:var(--green);padding:2px 6px;border-radius:100px;font-weight:600;margin-left:4px;}
+.adv-opt .paid-tag{font-size:.65rem;background:var(--gold-light);color:var(--gold);padding:2px 6px;border-radius:100px;font-weight:600;margin-left:4px;}
+.adv-key-row{margin-top:.9rem;display:none;}
+.adv-key-row.show{display:block;}
+.adv-key-row label{font-size:.75rem;color:var(--text2);margin-bottom:5px;display:block;}
+.adv-key-row input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:.85rem;font-family:var(--sans);outline:none;color:var(--text);}
+.adv-key-row input:focus{border-color:var(--accent);}
+
+/* Generate button */
+.gen-btn{width:100%;padding:14px;background:var(--accent);color:white;border:none;border-radius:var(--radius-xs);font-size:1rem;font-weight:500;cursor:pointer;transition:var(--transition);margin-top:1rem;}
+.gen-btn:hover{background:var(--accent-hover);}
+.gen-btn:disabled{background:var(--text3);cursor:not-allowed;}
+
+/* Generating state */
+.gen-state{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem;text-align:center;}
+.spinner{width:46px;height:46px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .75s linear infinite;margin:0 auto .9rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.prog-wrap{height:4px;background:var(--border);border-radius:2px;margin:1rem 0 .4rem;overflow:hidden;}
+.prog-fill{height:100%;background:var(--accent);border-radius:2px;width:0;transition:width .4s ease;}
+
+/* AI Prompt preview */
+.prompt-preview{background:white;border:1px solid var(--border);border-radius:var(--radius-xs);padding:1rem 1.2rem;margin:1rem 0;text-align:left;}
+.prompt-preview label{font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.5rem;}
+.prompt-preview p{font-size:.82rem;color:var(--text2);line-height:1.6;font-style:italic;}
+
+/* Done state */
+.done-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:2.5rem;text-align:center;}
+.done-icon{width:56px;height:56px;background:var(--green-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.1rem;}
+.done-icon svg{width:24px;height:24px;stroke:var(--green);fill:none;stroke-width:2.5;}
+
+/* ── STORY VIEW ── */
+.story-wrap{max-width:900px;margin:0 auto;}
+.story-hdr{padding:3rem 2rem 1.5rem;}
+.s-cat-tag{display:inline-block;background:var(--accent-light);color:var(--accent);font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:100px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem;}
+.s-title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.4rem);line-height:1.08;letter-spacing:-.025em;margin-bottom:.9rem;}
+.s-sub{font-size:1.1rem;color:var(--text2);line-height:1.65;margin-bottom:1.4rem;font-weight:300;}
+.s-byline{display:flex;align-items:center;gap:11px;padding-bottom:1.4rem;border-bottom:1px solid var(--border);margin-bottom:1.75rem;}
+.s-share{display:flex;gap:7px;margin-bottom:2rem;flex-wrap:wrap;}
+.s-share-btn{padding:6px 14px;border:1px solid var(--border);border-radius:100px;font-size:.78rem;font-weight:500;background:white;color:var(--text2);cursor:pointer;transition:var(--transition);}
+.s-share-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);}
+
+/* Video player */
+.vid-wrap{margin:0 2rem 2.5rem;border-radius:var(--radius);overflow:hidden;background:#0c0403;position:relative;aspect-ratio:16/9;cursor:pointer;}
+.vid-poster{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(145deg,#160806,#2d1410);}
+.vid-play{width:70px;height:70px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;margin:0 auto .75rem;box-shadow:0 8px 32px rgba(192,57,43,.4);transition:transform .15s;}
+.vid-play:hover{transform:scale(1.07);}
+.vid-play svg{width:28px;height:28px;fill:white;margin-left:3px;}
+.vid-label{font-family:var(--serif);font-size:1.2rem;color:white;margin-bottom:.2rem;}
+.vid-dur-label{font-size:.78rem;color:rgba(255,255,255,.45);}
+.vid-ctrl{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:1.25rem 1rem .9rem;display:flex;align-items:center;gap:10px;}
+.v-btn{background:none;border:none;color:white;cursor:pointer;padding:3px;}
+.v-btn svg{width:17px;height:17px;fill:white;}
+.prog-track{flex:1;height:3px;background:rgba(255,255,255,.28);border-radius:2px;cursor:pointer;}
+.prog-track-fill{height:100%;background:var(--accent);border-radius:2px;width:0;transition:width .5s linear;}
+.vid-time{font-size:.72rem;color:rgba(255,255,255,.65);}
+
+/* Story images */
+.s-imgs{margin:0 2rem 2.5rem;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.s-imgs .main{grid-column:1/-1;border-radius:var(--radius);overflow:hidden;height:280px;}
+.s-img-cell{border-radius:var(--radius-sm);overflow:hidden;height:150px;}
+.s-img-grad{width:100%;height:100%;background:linear-gradient(145deg,#160806 0%,#3a1912 50%,#160806 100%);display:flex;align-items:center;justify-content:center;font-family:var(--serif);color:rgba(255,255,255,.12);font-size:1.3rem;}
+
+/* Story text */
+.s-text{padding:0 2rem 2rem;}
+.s-prose{font-size:1.04rem;line-height:1.85;color:var(--text2);}
+.s-prose p{margin-bottom:1.4rem;}
+.s-prose strong{color:var(--text);font-weight:600;}
+.pull-quote{border-left:3px solid var(--accent);padding:.9rem 1.4rem;margin:1.75rem 0;background:var(--accent-light);border-radius:0 var(--radius-xs) var(--radius-xs) 0;}
+.pull-quote p{font-family:var(--serif);font-size:1.18rem;color:var(--text);line-height:1.5;margin:0;font-style:italic;}
+
+/* Comments */
+.comments{border-top:1px solid var(--border);padding:2rem;}
+.comments h3{font-family:var(--serif);font-size:1.45rem;margin-bottom:1.4rem;}
+.cmt-input-row{display:flex;gap:11px;margin-bottom:1.75rem;align-items:flex-start;}
+.cmt-box{flex:1;padding:9px 13px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:.875rem;resize:none;outline:none;min-height:76px;color:var(--text);transition:border-color .15s;}
+.cmt-box:focus{border-color:var(--accent);}
+.cmt-post{padding:9px 16px;background:var(--accent);color:white;border:none;border-radius:var(--radius-xs);font-size:.85rem;font-weight:500;cursor:pointer;transition:var(--transition);align-self:flex-end;}
+.cmt-post:hover{background:var(--accent-hover);}
+.cmt{display:flex;gap:11px;margin-bottom:1.4rem;padding-bottom:1.4rem;border-bottom:1px solid var(--border);}
+.cmt:last-child{border-bottom:none;}
+.cmt-body{flex:1;}
+.cmt-name{font-size:.85rem;font-weight:500;margin-bottom:3px;}
+.cmt-text{font-size:.85rem;color:var(--text2);line-height:1.6;}
+.cmt-meta{font-size:.72rem;color:var(--text3);margin-top:5px;}
+.cmt-like{font-size:.72rem;color:var(--text3);cursor:pointer;margin-top:5px;display:inline-block;}
+.cmt-like:hover{color:var(--accent);}
+
+/* ── PROFILE ── */
+.prof-banner{height:170px;background:linear-gradient(140deg,#160806,#3a1912);}
+.prof-body{max-width:800px;margin:0 auto;padding:0 2rem 3rem;position:relative;}
+.prof-av-wrap{position:absolute;top:-38px;left:2rem;width:76px;height:76px;border-radius:50%;border:4px solid white;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:1.85rem;color:white;}
+.prof-meta{padding-top:2.75rem;}
+.prof-name{font-family:var(--serif);font-size:1.9rem;letter-spacing:-.02em;}
+.prof-bio{color:var(--text2);font-size:.875rem;margin-top:.4rem;line-height:1.5;}
+.prof-stats{display:flex;gap:2rem;margin-top:.9rem;}
+.stat-n{font-size:1.2rem;font-weight:600;}
+.stat-l{font-size:.72rem;color:var(--text3);}
+.prof-acts{display:flex;gap:8px;margin-top:1.1rem;}
+.btn-follow{padding:8px 18px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:.875rem;font-weight:500;cursor:pointer;}
+.btn-msg{padding:8px 18px;background:white;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:.875rem;font-weight:500;cursor:pointer;}
+
+/* ── SETTINGS PAGE ── */
+.settings-wrap{max-width:680px;margin:0 auto;padding:3rem 2rem;}
+.settings-wrap h2{font-family:var(--serif);font-size:2rem;margin-bottom:2rem;}
+.settings-section{margin-bottom:2.5rem;}
+.settings-section h3{font-size:.78rem;font-weight:600;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:.9rem 0;border-bottom:1px solid var(--border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-row-label h4{font-size:.9rem;font-weight:500;}
+.settings-row-label p{font-size:.8rem;color:var(--text2);margin-top:2px;}
+.toggle-wrap{position:relative;width:38px;height:22px;background:var(--border2);border-radius:11px;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle-wrap.on{background:var(--green);}
+.toggle-knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle-wrap.on .toggle-knob{transform:translateX(16px);}
+
+/* ── CHAT ── */
+.chat-fab{position:fixed;bottom:1.75rem;right:1.75rem;z-index:300;width:50px;height:50px;border-radius:50%;background:var(--accent);color:white;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(192,57,43,.38);display:flex;align-items:center;justify-content:center;transition:transform .15s;}
+.chat-fab:hover{transform:scale(1.08);}
+.chat-fab svg{width:22px;height:22px;fill:white;}
+.chat-notif{position:absolute;top:-2px;right:-2px;width:17px;height:17px;background:#e67e22;border-radius:50%;border:2px solid white;font-size:.62rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.chat-panel{position:fixed;bottom:4.5rem;right:1.75rem;z-index:300;width:310px;background:white;border-radius:var(--radius);box-shadow:var(--shadow-lg);border:1px solid var(--border);display:none;flex-direction:column;max-height:460px;}
+.chat-panel.open{display:flex;}
+.chat-hdr{padding:.9rem 1.1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.chat-hdr h4{font-size:.9rem;font-weight:500;}
+.chat-online{font-size:.72rem;color:#27ae60;display:flex;align-items:center;gap:4px;margin-top:2px;}
+.online-dot{width:6px;height:6px;border-radius:50%;background:#27ae60;}
+.chat-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:1rem;}
+.chat-msgs{flex:1;overflow-y:auto;padding:.9rem;display:flex;flex-direction:column;gap:9px;}
+.cmsg{max-width:82%;padding:7px 11px;border-radius:11px;font-size:.82rem;line-height:1.4;}
+.cmsg.them{background:var(--bg2);color:var(--text);align-self:flex-start;border-bottom-left-radius:3px;}
+.cmsg.me{background:var(--accent);color:white;align-self:flex-end;border-bottom-right-radius:3px;}
+.cmsg-name{font-size:.68rem;color:var(--text3);margin-bottom:3px;}
+.chat-inp-row{display:flex;gap:7px;padding:.7rem;border-top:1px solid var(--border);}
+.chat-inp{flex:1;padding:7px 11px;border:1px solid var(--border);border-radius:18px;font-size:.82rem;outline:none;color:var(--text);}
+.chat-inp:focus{border-color:var(--accent);}
+.chat-send{width:32px;height:32px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.chat-send svg{width:15px;height:15px;fill:white;margin-left:1px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:1.75rem;left:50%;transform:translateX(-50%) translateY(120px);background:#111;color:white;padding:9px 20px;border-radius:100px;font-size:.84rem;font-weight:500;z-index:1000;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;display:none;align-items:center;justify-content:center;padding:1rem;}
+.modal-bg.open{display:flex;}
+.modal{background:white;border-radius:var(--radius);padding:2rem;max-width:480px;width:100%;box-shadow:var(--shadow-lg);}
+.modal h3{font-family:var(--serif);font-size:1.5rem;margin-bottom:.5rem;}
+.modal p{color:var(--text2);font-size:.9rem;line-height:1.55;margin-bottom:1.4rem;}
+.modal-acts{display:flex;gap:8px;justify-content:flex-end;}
+.modal-cancel{padding:9px 18px;background:white;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:.875rem;cursor:pointer;}
+.modal-ok{padding:9px 18px;background:var(--accent);color:white;border:none;border-radius:8px;font-size:.875rem;cursor:pointer;}
+
+/* Utility */
+.hidden{display:none!important;}
+.author-name{font-size:.84rem;font-weight:500;}
+.author-meta{font-size:.72rem;color:var(--text3);}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('feed')">
+    <div class="logo-mark"><svg viewBox="0 0 16 16"><path d="M8 1L9.8 5.8H15L10.6 8.7L12.4 13.5L8 10.6L3.6 13.5L5.4 8.7L1 5.8H6.2Z"/></svg></div>
+    Valor
+  </div>
+  <div class="nav-links" id="nav-links">
+    <button class="nav-btn active" id="nav-feed" onclick="showPage('feed')">Stories</button>
+    <button class="nav-btn" id="nav-create" onclick="showPage('create')">Create</button>
+    <button class="nav-btn" id="nav-profile" onclick="showPage('profile')">Profile</button>
+    <button class="nav-btn" id="nav-settings" onclick="showPage('settings')">Settings</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span id="nav-user-name" style="font-size:.82rem;color:var(--text2);display:none;"></span>
+    <button class="nav-cta" id="nav-auth-btn" onclick="showPage('auth')">Sign In</button>
+  </div>
+</nav>
+
+<!-- ════════════ AUTH PAGE ════════════ -->
+<div class="page" id="page-auth">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <h2>Welcome to Valor</h2>
+      <p>A community for stories of extraordinary courage.</p>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login',this)">Sign In</button>
+        <button class="auth-tab" onclick="switchAuthTab('signup',this)">Create Account</button>
+      </div>
+      <div class="auth-err" id="auth-err"></div>
+      <div id="auth-login">
+        <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+        <div class="field"><label>Password</label><input type="password" id="login-pw" placeholder="••••••••"></div>
+        <button class="auth-submit" onclick="doLogin()">Sign In</button>
+        <div class="auth-divider"><span>demo</span></div>
+        <button class="auth-submit" style="background:var(--bg2);color:var(--text);border:1px solid var(--border);" onclick="demoLogin()">Continue as Guest (demo)</button>
+      </div>
+      <div id="auth-signup" style="display:none;">
+        <div class="field"><label>Full Name</label><input type="text" id="signup-name" placeholder="Maria Reyes"></div>
+        <div class="field"><label>Email</label><input type="email" id="signup-email" placeholder="you@example.com"></div>
+        <div class="field"><label>Password</label><input type="password" id="signup-pw" placeholder="Min 8 characters"></div>
+        <button class="auth-submit" onclick="doSignup()">Create Account — Free</button>
+        <p style="font-size:.75rem;color:var(--text3);margin-top:.9rem;text-align:center;line-height:1.5;">Free plan includes 3 AI video generations powered by Pika Labs. No credit card needed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ FEED PAGE ════════════ -->
+<div class="page active" id="page-feed">
+  <div class="feed-hero">
+    <h1>Stories of <em>courage</em><br>that move the world</h1>
+    <p>Real people. Extraordinary acts. A community that honours bravery in all its forms.</p>
+    <div class="hero-btns">
+      <button class="btn-red" onclick="showPage('create')">Share Your Story</button>
+      <button class="btn-outline-white" onclick="showPage('story')">Read a Story</button>
+    </div>
+  </div>
+  <div class="feed-bar">
+    <div class="chip on">All</div>
+    <div class="chip">Military</div>
+    <div class="chip">Rescue</div>
+    <div class="chip">Everyday Heroes</div>
+    <div class="chip">Medical</div>
+    <div class="chip">Youth</div>
+    <div class="chip">Community</div>
+    <div class="chip">Survival</div>
+  </div>
+  <div class="feed-wrap">
+    <div class="feed-main">
+      <!-- Card 1 -->
+      <div class="scard">
+        <div class="scard-media" onclick="showPage('story')">
+          <div class="scard-media-label">⚓</div>
+          <div class="play-ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="dur-tag">1:47</div><div class="cat-tag">Rescue</div>
+        </div>
+        <div class="scard-body">
+          <div class="scard-author">
+            <div class="av" style="background:var(--accent);">MR</div>
+            <div><div class="author-name">Maria Reyes</div><div class="author-meta">3 days ago · 4 min read</div></div>
+          </div>
+          <div class="scard-title" onclick="showPage('story')">The Night I Jumped Into Freezing Waters to Save a Stranger</div>
+          <div class="scard-exc">Nobody plans to become a hero. That February evening I was walking home when I heard the splash — and everything changed.</div>
+          <div class="scard-actions">
+            <button class="scard-act liked" onclick="toggleLike(this)"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> 284</button>
+            <button class="scard-act" onclick="showPage('story')"><svg viewBox="0 0 24 24"><path d="M21 6.5A2.5 2.5 0 0018.5 4h-13A2.5 2.5 0 003 6.5v8A2.5 2.5 0 005.5 17H7v3l4-3h7.5a2.5 2.5 0 002.5-2.5v-8z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg> 47 comments</button>
+            <button class="scard-act" onclick="shareStory()"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg> Share</button>
+          </div>
+        </div>
+      </div>
+      <!-- Card 2 -->
+      <div class="scard">
+        <div class="scard-media" onclick="showPage('story')">
+          <div class="scard-media-label">🏥</div>
+          <div class="play-ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="dur-tag">1:52</div><div class="cat-tag">Medical</div>
+        </div>
+        <div class="scard-body">
+          <div class="scard-author">
+            <div class="av" style="background:#7a1208;">DK</div>
+            <div><div class="author-name">Dr. David Kim</div><div class="author-meta">1 week ago · 6 min read</div></div>
+          </div>
+          <div class="scard-title" onclick="showPage('story')">72 Hours Without Sleep: A Doctor's Story of the Worst Night</div>
+          <div class="scard-exc">The hospital was understaffed. Three patients coded in one hour. I had to choose who to save first.</div>
+          <div class="scard-actions">
+            <button class="scard-act" onclick="toggleLike(this)"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg> 511</button>
+            <button class="scard-act" onclick="showPage('story')"><svg viewBox="0 0 24 24"><path d="M21 6.5A2.5 2.5 0 0018.5 4h-13A2.5 2.5 0 003 6.5v8A2.5 2.5 0 005.5 17H7v3l4-3h7.5a2.5 2.5 0 002.5-2.5v-8z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg> 92</button>
+            <button class="scard-act" onclick="shareStory()"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg> Share</button>
+          </div>
+        </div>
+      </div>
+      <!-- Card 3 -->
+      <div class="scard">
+        <div class="scard-media" onclick="showPage('story')">
+          <div class="scard-media-label">🌊</div>
+          <div class="play-ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+          <div class="dur-tag">2:01</div><div class="cat-tag">Survival</div>
+        </div>
+        <div class="scard-body">
+          <div class="scard-author">
+            <div class="av" style="background:var(--gold);">SA</div>
+            <div><div class="author-name">Sofia Andersen</div><div class="author-meta">2 weeks ago · 8 min read</div></div>
+          </div>
+          <div class="scard-title" onclick="showPage('story')">Alone on the Mountain for 6 Days: How I Chose to Keep Living</div>
+          <div class="scard-exc">When my knee gave out on day two and fog swallowed the trail, I had to face something harder than the mountain itself.</div>
+          <div class="scard-actions">
+            <button class="scard-act" onclick="toggleLike(this)"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg> 892</button>
+            <button class="scard-act" onclick="showPage('story')"><svg viewBox="0 0 24 24"><path d="M21 6.5A2.5 2.5 0 0018.5 4h-13A2.5 2.5 0 003 6.5v8A2.5 2.5 0 005.5 17H7v3l4-3h7.5a2.5 2.5 0 002.5-2.5v-8z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg> 136</button>
+            <button class="scard-act" onclick="shareStory()"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg> Share</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="feed-side">
+      <div style="margin-bottom:2rem;">
+        <div class="side-label">Trending this week</div>
+        <div class="trend-item" onclick="showPage('story')"><div class="trend-n">01</div><div><div class="trend-title">The night a stranger saved my son</div><div class="trend-meta">2.1k likes · Everyday Heroes</div></div></div>
+        <div class="trend-item" onclick="showPage('story')"><div class="trend-n">02</div><div><div class="trend-title">Running into a burning house — twice</div><div class="trend-meta">1.8k likes · Rescue</div></div></div>
+        <div class="trend-item" onclick="showPage('story')"><div class="trend-n">03</div><div><div class="trend-title">Diagnosed at 16, competing at 22</div><div class="trend-meta">1.4k likes · Youth</div></div></div>
+        <div class="trend-item" onclick="showPage('story')"><div class="trend-n">04</div><div><div class="trend-title">She testified against her community</div><div class="trend-meta">1.1k likes · Community</div></div></div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.1rem;">
+        <div style="font-family:var(--serif);font-size:1rem;margin-bottom:.4rem;">Valor Community</div>
+        <p style="font-size:.8rem;color:var(--text2);line-height:1.5;margin-bottom:.9rem;">A space to share and witness extraordinary courage — big and small.</p>
+        <div style="font-size:.72rem;color:var(--text3);margin-bottom:.9rem;"><strong style="color:var(--text);">12,400</strong> members · <strong style="color:var(--text);">840</strong> stories</div>
+        <button class="btn-red" style="width:100%;padding:9px;" onclick="showToast('Welcome to Valor!')">Join Community</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ CREATE PAGE ════════════ -->
+<div class="page" id="page-create">
+  <div class="create-wrap">
+    <h2>Share Your Story</h2>
+    <p>Your courage deserves to be heard. We'll turn your words and images into a lasting story with an AI-generated video.</p>
+
+    <div class="steps">
+      <div class="step-item on" id="si1"><div class="step-num">1</div> Write</div>
+      <div class="step-line"></div>
+      <div class="step-item" id="si2"><div class="step-num">2</div> Images</div>
+      <div class="step-line"></div>
+      <div class="step-item" id="si3"><div class="step-num">3</div> Video</div>
+      <div class="step-line"></div>
+      <div class="step-item" id="si4"><div class="step-num">4</div> Publish</div>
+    </div>
+
+    <!-- STEP 1: Write -->
+    <div id="cs1">
+      <div class="fsection">
+        <label class="flabel">Story Title</label>
+        <input class="finput" id="s-title" placeholder="Give your story a powerful title…">
+      </div>
+      <div class="fsection">
+        <label class="flabel">Category</label>
+        <select class="finput" id="s-cat">
+          <option>Rescue</option><option>Military</option><option>Everyday Heroes</option>
+          <option>Medical</option><option>Youth</option><option>Community</option><option>Survival</option>
+        </select>
+      </div>
+      <div class="fsection">
+        <label class="flabel">Your Story</label>
+        <textarea class="finput" id="s-text" placeholder="Tell us what happened. Be as detailed as you'd like — your words will shape both the video narration and the story page…"></textarea>
+      </div>
+      <button class="gen-btn" onclick="goStep(2)">Continue to Images →</button>
+    </div>
+
+    <!-- STEP 2: Images -->
+    <div id="cs2" class="hidden">
+      <div class="fsection">
+        <label class="flabel">Upload Images <span style="font-weight:400;text-transform:none;color:var(--text3);">(up to 12)</span></label>
+        <div class="upload-zone" onclick="document.getElementById('file-in').click()">
+          <div style="font-size:2rem;margin-bottom:.6rem;">🖼️</div>
+          <h4>Drop images here or click to browse</h4>
+          <p>JPG, PNG, WEBP · Max 10 MB each</p>
+        </div>
+        <input type="file" id="file-in" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
+        <div class="img-grid" id="img-grid"></div>
+      </div>
+
+      <!-- STORAGE PROVIDER — smart default + advanced -->
+      <label class="flabel">Storage</label>
+      <div class="provider-block">
+        <div class="provider-default">
+          <div class="provider-icon" style="background:#fdf3e8;">☁️</div>
+          <div class="provider-text">
+            <h4>Cloudinary <span class="provider-rec">Recommended · Free</span></h4>
+            <p>Free tier · 25 GB · Images + video ready. No account needed to start.</p>
+          </div>
+          <button class="provider-adv-toggle" id="storage-toggle" onclick="toggleAdv('storage')">
+            Advanced <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="provider-adv-panel" id="storage-adv">
+          <div class="adv-title">Choose your storage provider</div>
+          <div class="adv-options">
+            <div class="adv-opt selected" onclick="selectOpt(this,'storage','cloudinary')">
+              <h5>Cloudinary <span class="free-tag">Free</span></h5>
+              <p>25 GB · Optimised for media · No setup needed</p>
+            </div>
+            <div class="adv-opt" onclick="selectOpt(this,'storage','firebase')">
+              <h5>Firebase Storage <span class="free-tag">Free</span></h5>
+              <p>5 GB free · Google infrastructure · Scales easily</p>
+            </div>
+            <div class="adv-opt" onclick="selectOpt(this,'storage','github')">
+              <h5>GitHub Repo <span class="free-tag">Free</span></h5>
+              <p>Works with your existing GitHub account · 1 GB limit</p>
+            </div>
+            <div class="adv-opt" onclick="selectOpt(this,'storage','s3')">
+              <h5>Amazon S3 <span class="paid-tag">Paid</span></h5>
+              <p>Enterprise scale · Requires AWS account + billing</p>
+            </div>
+          </div>
+          <div class="adv-key-row" id="storage-key-row">
+            <label id="storage-key-label">Cloudinary Cloud Name</label>
+            <input type="text" id="storage-key-input" placeholder="your-cloud-name">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:1rem;">
+        <button class="gen-btn" style="background:var(--bg3);color:var(--text);flex:0 0 auto;width:auto;padding:12px 22px;" onclick="goStep(1)">← Back</button>
+        <button class="gen-btn" onclick="goStep(3)">Continue to Video →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Video provider + generate -->
+    <div id="cs3" class="hidden">
+
+      <!-- VIDEO PROVIDER — smart default + advanced -->
+      <label class="flabel">AI Video Provider</label>
+      <div class="provider-block">
+        <div class="provider-default">
+          <div class="provider-icon" style="background:#edf7f2;">🎬</div>
+          <div class="provider-text">
+            <h4>Pika Labs <span class="provider-rec">Recommended · Free</span></h4>
+            <p>Free trial credits when you sign up. Valor sends your story to Pika automatically.</p>
+          </div>
+          <button class="provider-adv-toggle" id="video-toggle" onclick="toggleAdv('video')">
+            Advanced <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="provider-adv-panel" id="video-adv">
+          <div class="adv-title">Choose your AI video provider</div>
+          <div class="adv-options">
+            <div class="adv-opt selected" onclick="selectOpt(this,'video','pika')">
+              <h5>Pika Labs <span class="free-tag">Free trial</span></h5>
+              <p>Sign up for free credits · Cinematic quality · Easy API</p>
+            </div>
+            <div class="adv-opt" onclick="selectOpt(this,'video','runway')">
+              <h5>Runway ML <span class="free-tag">Free trial</span></h5>
+              <p>125 free credits on signup · Industry standard · Gen-3</p>
+            </div>
+            <div class="adv-opt" onclick="selectOpt(this,'video','kling')">
+              <h5>Kling AI <span class="free-tag">Free tier</span></h5>
+              <p>66 free credits/day · Realistic motion · Asian market leader</p>
+            </div>
+            <div class="adv-opt" onclick="selectOpt(this,'video','valor')">
+              <h5>Valor Credits <span class="paid-tag">Pay per video</span></h5>
+              <p>We handle everything · $2.50 per 90-sec video · No account needed</p>
+            </div>
+          </div>
+          <div class="adv-key-row" id="video-key-row">
+            <label id="video-key-label">Pika Labs API Key</label>
+            <input type="text" id="video-key-input" placeholder="pk-xxxxxxxxxxxxxxxx">
+          </div>
+          <div id="video-valor-note" class="hidden" style="margin-top:.75rem;padding:.75rem 1rem;background:var(--gold-light);border-radius:var(--radius-xs);font-size:.8rem;color:var(--gold);">
+            You have <strong>3 free Valor credits</strong> remaining on your free plan. Each video costs 1 credit.
+          </div>
+        </div>
+      </div>
+
+      <!-- AUTH PROVIDER — smart default + advanced -->
+      <label class="flabel" style="margin-top:1.5rem;">Account & Login</label>
+      <div class="provider-block">
+        <div class="provider-default">
+          <div class="provider-icon" style="background:#edf3fb;">🔐</div>
+          <div class="provider-text">
+            <h4>Firebase Auth <span class="provider-rec">Recommended · Free</span></h4>
+            <p>Email + password login. Free up to 10,000 users/month. Managed by Google.</p>
+          </div>
+          <button class="provider-adv-toggle" id="auth-toggle" onclick="toggleAdv('auth')">
+            Advanced <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+        <div class="provider-adv-panel" id="auth-adv">
+          <div class="adv-title">Choose your authentication provider</div>
+          <div class="adv-options">
+            <div class="adv-opt selected" onclick="selectOpt(this,'auth','firebase')">
+              <h5>Firebase Auth <span class="free-tag">Free</span></h5>
+              <p>Email + password · Google OAuth · 10k users/month free</p>
+            </div>
+            <div class="adv-opt" onclick="selectOpt(this,'auth','supabase')">
+              <h5>Supabase Auth <span class="free-tag">Free</span></h5>
+              <p>Open source · 50k users free · Email + social login</p>
+            </div>
+            <div class="adv-opt" onclick="selectOpt(this,'auth','auth0')">
+              <h5>Auth0 <span class="free-tag">Free</span></h5>
+              <p>7,500 users free · Enterprise-grade · Easy to set up</p>
+            </div>
+            <div class="adv-opt" onclick="selectOpt(this,'auth','custom')">
+              <h5>Custom / Bring your own <span class="paid-tag">Self-hosted</span></h5>
+              <p>Full control · Requires a backend server</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI PROMPT PREVIEW + GENERATE -->
+      <div style="margin-top:1.5rem;padding:1.2rem 1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);">
+        <div style="font-size:.78rem;font-weight:600;color:var(--text3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.75rem;">How Valor crafts your video prompt</div>
+        <p style="font-size:.84rem;color:var(--text2);line-height:1.6;">Your story text is sent to Claude, which uses Valor's editorial template for bravery stories — cinematic pacing, authentic emotion, no clichés — and generates a precise video prompt. That prompt goes to your chosen AI video provider.</p>
+        <button style="margin-top:.9rem;padding:7px 14px;background:white;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:.8rem;cursor:pointer;color:var(--text2);" onclick="previewPrompt()">Preview AI prompt →</button>
+        <div class="prompt-preview hidden" id="prompt-box">
+          <label>Generated video prompt</label>
+          <p id="prompt-text">Generating…</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:1.25rem;">
+        <button class="gen-btn" style="background:var(--bg3);color:var(--text);flex:0 0 auto;width:auto;padding:12px 22px;" onclick="goStep(2)">← Back</button>
+        <button class="gen-btn" id="gen-btn-main" onclick="startGenerate()">Generate My Video Story →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Generating + Done -->
+    <div id="cs4" class="hidden">
+      <div class="gen-state" id="gen-running">
+        <div class="spinner"></div>
+        <h3 style="font-family:var(--serif);font-size:1.5rem;margin-bottom:.4rem;">Creating your story</h3>
+        <p id="gen-status" style="color:var(--text2);font-size:.875rem;">Crafting your editorial video prompt with Claude…</p>
+        <div class="prog-wrap"><div class="prog-fill" id="prog-fill"></div></div>
+        <p id="prog-pct" style="font-size:.75rem;color:var(--text3);">0%</p>
+      </div>
+      <div class="done-card hidden" id="gen-done">
+        <div class="done-icon">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h3 style="font-family:var(--serif);font-size:1.85rem;margin-bottom:.4rem;">Your story is live!</h3>
+        <p style="color:var(--text2);margin-bottom:1.5rem;">A 1:47 video has been generated and your story page is ready to share with the world.</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <button class="gen-btn" style="width:auto;padding:11px 22px;" onclick="showPage('story')">Preview Story Page</button>
+          <button class="gen-btn" style="width:auto;padding:11px 22px;background:var(--text);" onclick="publishStory()">Publish to Valor</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════ STORY VIEW ════════════ -->
+<div class="page" id="page-story">
+  <div class="story-wrap">
+    <div class="story-hdr">
+      <div class="s-cat-tag">Rescue · Bravery Story</div>
+      <h1 class="s-title">The Night I Jumped Into Freezing Waters to Save a Stranger</h1>
+      <p class="s-sub">Nobody plans to become a hero. That February evening changed everything — and I'm still not sure I made a choice at all.</p>
+      <div class="s-byline">
+        <div class="av" style="background:var(--accent);width:42px;height:42px;font-size:.95rem;">MR</div>
+        <div><div class="author-name">Maria Reyes</div><div class="author-meta">March 22, 2026 · 4 min read · 284 likes</div></div>
+      </div>
+      <div class="s-share">
+        <button class="s-share-btn" onclick="shareStory()">🔗 Copy link</button>
+        <button class="s-share-btn" onclick="shareStory()">✉️ Email</button>
+        <button class="s-share-btn" onclick="shareStory()">💬 WhatsApp</button>
+        <button class="s-share-btn" id="like-story-btn" onclick="likeStory()">♡ Like</button>
+      </div>
+    </div>
+
+    <div class="vid-wrap">
+      <div class="vid-poster">
+        <div class="vid-play" onclick="playVideo()"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+        <div class="vid-label">Watch the Story</div>
+        <div class="vid-dur-label">1 min 47 sec · Powered by Pika Labs</div>
+      </div>
+      <div class="vid-ctrl">
+        <button class="v-btn" onclick="playVideo()"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+        <div class="prog-track" onclick="seekVid(event)"><div class="prog-track-fill" id="vpfill"></div></div>
+        <span class="vid-time" id="vtime">0:00 / 1:47</span>
+      </div>
+    </div>
+
+    <div class="s-imgs">
+      <div class="main"><div class="s-img-grad">The Bridge, February Night</div></div>
+      <div class="s-img-cell"><div class="s-img-grad">River at dusk</div></div>
+      <div class="s-img-cell"><div class="s-img-grad">The rescue team</div></div>
+    </div>
+
+    <div class="s-text">
+      <div class="s-prose">
+        <p>It was past 10pm and the Riverside Bridge was mostly empty. I was heading home after a long shift, headphones in, thinking about nothing in particular — the way you do when your body is on autopilot.</p>
+        <p>Then I heard it. A sound below the usual city noise. Something between a gasp and a cry. I pulled out my headphones and looked over the railing, and <strong>that's when I saw him</strong> — a man, maybe sixty, caught in the current near one of the support pillars. He wasn't swimming. He was clinging.</p>
+        <div class="pull-quote"><p>"There was no decision. My coat was already off before my brain caught up to what my body was doing."</p></div>
+        <p>The water was 4°C. I know this now. At the time, the cold was just a fact — like the darkness, like the current. I reached him in about forty seconds and somehow got my arm around his chest. We both got pulled twenty meters downstream before I found the bank.</p>
+        <p>The man's name is Leonard. He sends me a card every February. This year he wrote: <strong>"You gave me five more years. My granddaughter was born last month."</strong></p>
+        <p>I still don't know if I was brave. I think bravery might be something you only see in other people, looking back. In the moment, there was just a man in the water and a direction to go.</p>
+      </div>
+    </div>
+
+    <div class="comments">
+      <h3>47 comments</h3>
+      <div class="cmt-input-row">
+        <div class="av" style="background:var(--bg3);color:var(--text2);font-weight:600;font-size:.75rem;">You</div>
+        <textarea class="cmt-box" id="new-cmt" placeholder="Share your thoughts on this story…"></textarea>
+        <button class="cmt-post" onclick="addComment()">Post</button>
+      </div>
+      <div id="cmt-list">
+        <div class="cmt"><div class="av" style="background:#7a1208;font-size:.72rem;">DK</div><div class="cmt-body"><div class="cmt-name">Dr. David Kim</div><div class="cmt-text">This brought tears to my eyes. What you did in those seconds mattered beyond what you'll ever know.</div><div class="cmt-meta">3 days ago</div><div class="cmt-like" onclick="this.textContent='❤️ 12 likes'">♡ 11 likes</div></div></div>
+        <div class="cmt"><div class="av" style="background:var(--gold);font-size:.72rem;">SA</div><div class="cmt-body"><div class="cmt-name">Sofia Andersen</div><div class="cmt-text">"Bravery is something you only see in other people looking back" — the most honest thing I've read about courage. Thank you Maria.</div><div class="cmt-meta">2 days ago</div><div class="cmt-like" onclick="this.textContent='❤️ 8 likes'">♡ 7 likes</div></div></div>
+        <div class="cmt"><div class="av" style="background:#2c5f2e;font-size:.72rem;">JL</div><div class="cmt-body"><div class="cmt-name">James Lowery</div><div class="cmt-text">Leonard's granddaughter. I'm not crying, you're crying. 🥹</div><div class="cmt-meta">1 day ago</div><div class="cmt-like" onclick="this.textContent='❤️ 32 likes'">♡ 31 likes</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ PROFILE PAGE ════════════ -->
+<div class="page" id="page-profile">
+  <div class="prof-banner"></div>
+  <div class="prof-body">
+    <div class="prof-av-wrap">M</div>
+    <div class="prof-meta">
+      <div class="prof-name">Maria Reyes <span class="plan-badge plan-free" style="vertical-align:middle;">Free</span></div>
+      <div class="prof-bio">Nurse. Mother. Accidental hero. Sharing stories because courage deserves a witness. 📍 Barcelona</div>
+      <div class="prof-stats">
+        <div><div class="stat-n">3</div><div class="stat-l">Stories</div></div>
+        <div><div class="stat-n">1.4k</div><div class="stat-l">Followers</div></div>
+        <div><div class="stat-n">892</div><div class="stat-l">Likes received</div></div>
+        <div><div class="stat-n">3</div><div class="stat-l" style="color:var(--green);">Video credits left</div></div>
+      </div>
+      <div class="prof-acts">
+        <button class="btn-follow" onclick="showToast('Following Maria!')">Follow</button>
+        <button class="btn-msg" onclick="openChat()">Message</button>
+        <button class="btn-msg" onclick="shareStory()">Share Profile</button>
+      </div>
+    </div>
+    <div style="margin-top:2rem;">
+      <h3 style="font-family:var(--serif);font-size:1.2rem;margin-bottom:1.2rem;">Stories by Maria</h3>
+      <div class="scard" onclick="showPage('story')" style="cursor:pointer;max-width:600px;">
+        <div class="scard-media"><div class="scard-media-label">⚓</div><div class="play-ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><div class="dur-tag">1:47</div><div class="cat-tag">Rescue</div></div>
+        <div class="scard-body"><div class="scard-title">The Night I Jumped Into Freezing Waters to Save a Stranger</div><div class="scard-exc">Nobody plans to become a hero…</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ SETTINGS PAGE ════════════ -->
+<div class="page" id="page-settings">
+  <div class="settings-wrap">
+    <h2>Settings</h2>
+    <div class="settings-section">
+      <h3>Account</h3>
+      <div class="settings-row"><div class="settings-row-label"><h4>Plan</h4><p>Free — 3 AI video credits remaining</p></div><button class="btn-red" style="padding:7px 16px;font-size:.82rem;" onclick="showToast('Pro plans coming soon!')">Upgrade to Pro</button></div>
+      <div class="settings-row"><div class="settings-row-label"><h4>Email</h4><p id="settings-email">demo@valor.app</p></div><button style="padding:7px 14px;border:1px solid var(--border);border-radius:7px;font-size:.82rem;background:white;cursor:pointer;">Change</button></div>
+      <div class="settings-row"><div class="settings-row-label"><h4>Sign out</h4><p>You'll need to sign in again</p></div><button style="padding:7px 14px;border:1px solid var(--border);border-radius:7px;font-size:.82rem;background:white;cursor:pointer;color:var(--accent);" onclick="doLogout()">Sign out</button></div>
+    </div>
+    <div class="settings-section">
+      <h3>Default providers</h3>
+      <div class="settings-row">
+        <div class="settings-row-label"><h4>AI Video</h4><p id="s-video-val">Pika Labs (recommended)</p></div>
+        <button style="padding:7px 14px;border:1px solid var(--border);border-radius:7px;font-size:.82rem;background:white;cursor:pointer;" onclick="showToast('Change in story creator → Advanced')">Change</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label"><h4>Storage</h4><p id="s-storage-val">Cloudinary (recommended)</p></div>
+        <button style="padding:7px 14px;border:1px solid var(--border);border-radius:7px;font-size:.82rem;background:white;cursor:pointer;" onclick="showToast('Change in story creator → Advanced')">Change</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label"><h4>Authentication</h4><p>Firebase Auth (recommended)</p></div>
+        <button style="padding:7px 14px;border:1px solid var(--border);border-radius:7px;font-size:.82rem;background:white;cursor:pointer;" onclick="showToast('Change in story creator → Advanced')">Change</button>
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>Notifications</h3>
+      <div class="settings-row"><div class="settings-row-label"><h4>New comments</h4><p>When someone comments on your story</p></div><div class="toggle-wrap on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+      <div class="settings-row"><div class="settings-row-label"><h4>New followers</h4><p>When someone follows your profile</p></div><div class="toggle-wrap on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+      <div class="settings-row"><div class="settings-row-label"><h4>Weekly digest</h4><p>Top bravery stories of the week</p></div><div class="toggle-wrap" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ CHAT ════════════ -->
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-hdr">
+    <div><h4>Community Chat</h4><div class="chat-online"><div class="online-dot"></div>28 online now</div></div>
+    <button class="chat-close" onclick="closeChat()">✕</button>
+  </div>
+  <div class="chat-msgs" id="chat-msgs">
+    <div><div class="cmsg-name">Sofia A.</div><div class="cmsg them">This community is incredible. Every story here moves me.</div></div>
+    <div><div class="cmsg-name">James L.</div><div class="cmsg them">Has anyone read Maria's latest story? Absolutely stunning.</div></div>
+    <div><div class="cmsg-name">Dr. Kim</div><div class="cmsg them">Welcome to everyone who joined this week — 84 new members!</div></div>
+  </div>
+  <div class="chat-inp-row">
+    <input class="chat-inp" id="chat-inp" placeholder="Say something…" onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" onclick="sendChat()"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+  </div>
+</div>
+<button class="chat-fab" onclick="toggleChat()" style="position:fixed;bottom:1.75rem;right:1.75rem;">
+  <svg viewBox="0 0 24 24"><path d="M21 6.5A2.5 2.5 0 0018.5 4h-13A2.5 2.5 0 003 6.5v8A2.5 2.5 0 005.5 17H7v3l4-3h7.5a2.5 2.5 0 002.5-2.5v-8z"/></svg>
+  <div class="chat-notif">3</div>
+</button>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h3 id="modal-title">Sign in to continue</h3>
+    <p id="modal-body">You need an account to share your story. It's free and takes 30 seconds.</p>
+    <div class="modal-acts">
+      <button class="modal-cancel" onclick="closeModal()">Maybe later</button>
+      <button class="modal-ok" onclick="closeModal();showPage('auth')">Sign In / Sign Up</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── STATE ── */
+let user = null;
+let chatOpen = false;
+let vidSecs = 0, vidTimer = null, vidPlaying = false;
+const VID_TOTAL = 107;
+let selectedProviders = {storage:'cloudinary', video:'pika', auth:'firebase'};
+
+const PROVIDER_LABELS = {
+  storage:{cloudinary:'Cloudinary (recommended)',firebase:'Firebase Storage',github:'GitHub Repo',s3:'Amazon S3'},
+  video:{pika:'Pika Labs (recommended)',runway:'Runway ML',kling:'Kling AI',valor:'Valor Credits'},
+  auth:{firebase:'Firebase Auth (recommended)',supabase:'Supabase Auth',auth0:'Auth0',custom:'Custom (self-hosted)'}
+};
+const KEY_LABELS = {
+  storage:{cloudinary:'Cloudinary Cloud Name',firebase:'Firebase Config JSON',github:'GitHub Token',s3:'AWS Access Key'},
+  video:{pika:'Pika Labs API Key',runway:'Runway API Key',kling:'Kling API Key',valor:''}
+};
+const KEY_PLACEHOLDERS = {
+  storage:{cloudinary:'your-cloud-name',firebase:'{"apiKey":"..."}',github:'ghp_xxxxx',s3:'AKIA...'},
+  video:{pika:'pk-xxxxxxxx',runway:'key_xxxxxxxx',kling:'kl_xxxxxxxx',valor:''}
+};
+
+/* ── NAVIGATION ── */
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const nb = document.getElementById('nav-'+p);
+  if(nb) nb.classList.add('active');
+  if(p==='story') document.getElementById('nav-feed').classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ── AUTH (demo) ── */
+function doLogin(){
+  const e=document.getElementById('login-email').value;
+  const pw=document.getElementById('login-pw').value;
+  if(!e||!pw){showAuthErr('Please enter your email and password.');return;}
+  setUser({name:'Maria Reyes',email:e});
+}
+function doSignup(){
+  const n=document.getElementById('signup-name').value;
+  const e=document.getElementById('signup-email').value;
+  const pw=document.getElementById('signup-pw').value;
+  if(!n||!e||!pw){showAuthErr('Please fill in all fields.');return;}
+  if(pw.length<8){showAuthErr('Password must be at least 8 characters.');return;}
+  setUser({name:n,email:e});
+}
+function demoLogin(){setUser({name:'Demo User',email:'demo@valor.app'});}
+function setUser(u){
+  user=u;
+  document.getElementById('nav-user-name').textContent=u.name.split(' ')[0];
+  document.getElementById('nav-user-name').style.display='';
+  document.getElementById('nav-auth-btn').textContent='Sign Out';
+  document.getElementById('nav-auth-btn').onclick=doLogout;
+  document.getElementById('settings-email').textContent=u.email;
+  showToast('Welcome, '+u.name.split(' ')[0]+'!');
+  showPage('feed');
+}
+function doLogout(){user=null;document.getElementById('nav-user-name').style.display='none';document.getElementById('nav-auth-btn').textContent='Sign In';document.getElementById('nav-auth-btn').onclick=()=>showPage('auth');showToast('Signed out.');showPage('feed');}
+function showAuthErr(msg){const el=document.getElementById('auth-err');el.textContent=msg;el.style.display='block';}
+function switchAuthTab(tab,btn){
+  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('auth-login').style.display=tab==='login'?'block':'none';
+  document.getElementById('auth-signup').style.display=tab==='signup'?'block':'none';
+  document.getElementById('auth-err').style.display='none';
+}
+
+/* ── ADVANCED TOGGLE ── */
+function toggleAdv(name){
+  const panel=document.getElementById(name+'-adv');
+  const btn=document.getElementById(name+'-toggle');
+  const open=panel.classList.toggle('open');
+  btn.classList.toggle('open',open);
+}
+function selectOpt(el,name,val){
+  selectedProviders[name]=val;
+  el.closest('.adv-options').querySelectorAll('.adv-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  // Update settings page labels
+  const settingsEl = document.getElementById('s-'+name+'-val');
+  if(settingsEl) settingsEl.textContent = PROVIDER_LABELS[name][val] || val;
+  // Show/hide key input
+  if(name==='storage'||name==='video'){
+    const keyRow=document.getElementById(name+'-key-row');
+    const keyLabel=document.getElementById(name+'-key-label');
+    const keyInput=document.getElementById(name+'-key-input');
+    if(val==='valor'){
+      keyRow.classList.remove('show');
+      document.getElementById('video-valor-note').classList.remove('hidden');
+    } else {
+      document.getElementById('video-valor-note')?.classList.add('hidden');
+      keyRow.classList.add('show');
+      if(keyLabel) keyLabel.textContent = KEY_LABELS[name][val]||val+' Key';
+      if(keyInput) keyInput.placeholder = KEY_PLACEHOLDERS[name][val]||'API Key';
+    }
+  }
+  showToast(PROVIDER_LABELS[name][val]+' selected');
+}
+
+/* ── CREATE STEPS ── */
+function goStep(n){
+  for(let i=1;i<=4;i++){
+    document.getElementById('cs'+i).classList.add('hidden');
+    const s=document.getElementById('si'+i);
+    s.classList.remove('on','done');
+    if(i<n)s.classList.add('done');
+    else if(i===n)s.classList.add('on');
+  }
+  document.getElementById('cs'+n).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+/* ── IMAGE UPLOAD ── */
+function handleFiles(files){
+  const grid=document.getElementById('img-grid');
+  Array.from(files).slice(0,12).forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      const d=document.createElement('div');
+      d.className='img-thumb';
+      d.innerHTML=`<img src="${e.target.result}"><button class="img-rm" onclick="this.parentNode.remove()">✕</button>`;
+      grid.appendChild(d);
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+/* ── PROMPT PREVIEW ── */
+async function previewPrompt(){
+  const title=document.getElementById('s-title').value||'A Story of Bravery';
+  const text=document.getElementById('s-text').value||'A person overcame fear and helped someone in danger.';
+  const cat=document.getElementById('s-cat').value;
+  const box=document.getElementById('prompt-box');
+  const ptxt=document.getElementById('prompt-text');
+  box.classList.remove('hidden');
+  ptxt.textContent='Generating with Claude…';
+  const systemPrompt=`You are Valor's editorial AI. Your job is to transform a user's bravery story into a precise, cinematic video prompt for an AI video generator. The prompt must:
+- Be 80-120 words
+- Use vivid, specific imagery grounded in the story's real details
+- Evoke emotion without melodrama
+- Avoid clichés like "hero", "brave", "courage"
+- Describe visual scenes: lighting, movement, atmosphere, close-ups
+- Match the category: ${cat}
+- Feel like a high-end documentary film treatment
+Output ONLY the video prompt, no preamble.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:200,
+        system:systemPrompt,
+        messages:[{role:'user',content:`Title: ${title}\nCategory: ${cat}\nStory:\n${text.slice(0,800)}`}]
+      })
+    });
+    const data=await res.json();
+    ptxt.textContent=data.content?.[0]?.text||'Could not generate prompt — check your Anthropic API key in Settings.';
+  }catch(e){
+    ptxt.textContent='[Demo mode] Cinematic close-up of a rain-slicked bridge at night, breath visible in the cold air. A figure pauses mid-step, head turning sharply toward the dark water below. Without hesitation, coat discarded, the person descends the embankment with controlled urgency. The river surface, lit by distant streetlights, fragments around two figures. Slow pull-back as a hand grips a railing, two silhouettes dragging toward the bank. Stillness. Then movement. Cut to a hospital corridor, morning light, a hand holding another.';
+  }
+}
+
+/* ── GENERATE ── */
+function startGenerate(){
+  if(!user){
+    document.getElementById('modal-bg').classList.add('open');
+    return;
+  }
+  goStep(4);
+  const msgs=[
+    [0,'Crafting your editorial video prompt with Claude…'],
+    [18,'Sending prompt to '+PROVIDER_LABELS.video[selectedProviders.video]+'…'],
+    [35,'AI video generation in progress…'],
+    [55,'Rendering cinematic scenes…'],
+    [72,'Adding pacing and transitions…'],
+    [88,'Building your story page…'],
+    [97,'Almost ready…']
+  ];
+  let pct=0, mi=0;
+  const fill=document.getElementById('prog-fill');
+  const pctEl=document.getElementById('prog-pct');
+  const statusEl=document.getElementById('gen-status');
+  const iv=setInterval(()=>{
+    pct=Math.min(pct+Math.random()*3.5+0.8,100);
+    fill.style.width=pct+'%';
+    pctEl.textContent=Math.round(pct)+'%';
+    while(mi<msgs.length&&pct>=msgs[mi][0]){statusEl.textContent=msgs[mi][1];mi++;}
+    if(pct>=100){
+      clearInterval(iv);
+      setTimeout(()=>{
+        document.getElementById('gen-running').classList.add('hidden');
+        document.getElementById('gen-done').classList.remove('hidden');
+        document.getElementById('si4').classList.add('on');
+      },600);
+    }
+  },220);
+}
+function publishStory(){showToast('Your story is live on Valor!');setTimeout(()=>showPage('feed'),900);}
+
+/* ── VIDEO PLAYER ── */
+function playVideo(){
+  if(vidPlaying)return;
+  vidPlaying=true;
+  showToast('Playing video…');
+  vidTimer=setInterval(()=>{
+    vidSecs=Math.min(vidSecs+1,VID_TOTAL);
+    document.getElementById('vpfill').style.width=(vidSecs/VID_TOTAL*100)+'%';
+    const m=Math.floor(vidSecs/60),s=vidSecs%60;
+    document.getElementById('vtime').textContent=`${m}:${s.toString().padStart(2,'0')} / 1:47`;
+    if(vidSecs>=VID_TOTAL){clearInterval(vidTimer);vidPlaying=false;}
+  },1000);
+}
+function seekVid(e){
+  const t=document.getElementById('vpfill').parentNode;
+  const pct=Math.max(0,Math.min(1,(e.clientX-t.getBoundingClientRect().left)/t.offsetWidth));
+  vidSecs=Math.round(pct*VID_TOTAL);
+  document.getElementById('vpfill').style.width=(pct*100)+'%';
+}
+
+/* ── FEED ── */
+function toggleLike(btn){
+  btn.classList.toggle('liked');
+  const m=btn.textContent.trim().match(/\d+/);
+  if(m){const n=parseInt(m[0]);btn.innerHTML=btn.innerHTML.replace(/\d+/,btn.classList.contains('liked')?n+1:n-1);}
+}
+function likeStory(){
+  const btn=document.getElementById('like-story-btn');
+  btn.textContent=btn.textContent==='♡ Like'?'❤️ Liked':'♡ Like';
+}
+function shareStory(){showToast('Link copied to clipboard!');}
+
+/* ── CHAT ── */
+function toggleChat(){chatOpen?closeChat():openChat();}
+function openChat(){chatOpen=true;document.getElementById('chat-panel').classList.add('open');document.querySelector('.chat-notif').style.display='none';}
+function closeChat(){chatOpen=false;document.getElementById('chat-panel').classList.remove('open');}
+function sendChat(){
+  const inp=document.getElementById('chat-inp');
+  const msg=inp.value.trim();if(!msg)return;
+  const list=document.getElementById('chat-msgs');
+  const d=document.createElement('div');
+  d.innerHTML=`<div class="cmsg me">${msg}</div>`;
+  list.appendChild(d);list.scrollTop=list.scrollHeight;inp.value='';
+  const replies=['So inspiring!','Thank you for sharing ❤️','This community is incredible.','Welcome! Your story sounds amazing.'];
+  setTimeout(()=>{
+    const r=document.createElement('div');
+    r.innerHTML=`<div class="cmsg-name">Community</div><div class="cmsg them">${replies[Math.floor(Math.random()*replies.length)]}</div>`;
+    list.appendChild(r);list.scrollTop=list.scrollHeight;
+  },900);
+}
+
+/* ── COMMENTS ── */
+function addComment(){
+  const box=document.getElementById('new-cmt');
+  const txt=box.value.trim();if(!txt)return;
+  const list=document.getElementById('cmt-list');
+  const d=document.createElement('div');d.className='cmt';
+  d.innerHTML=`<div class="av" style="background:var(--accent);font-size:.72rem;">You</div><div class="cmt-body"><div class="cmt-name">You</div><div class="cmt-text">${txt}</div><div class="cmt-meta">Just now</div><div class="cmt-like">♡ 0 likes</div></div>`;
+  list.insertBefore(d,list.firstChild);box.value='';
+  showToast('Comment posted!');
+}
+
+/* ── MODAL ── */
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');}
+
+/* ── TOAST ── */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+/* ── CHIPS ── */
+document.querySelectorAll('.chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
+    c.classList.add('on');
+  });
+});
+</script>
+</body>
+</html>
