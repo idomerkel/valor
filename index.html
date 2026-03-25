@@ -304,12 +304,11 @@ textarea.finput{min-height:160px;resize:vertical;line-height:1.65;}
 <body>
 
 <!-- Firebase SDKs (CDN — no npm needed for static HTML) -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, arrayUnion, arrayRemove, orderBy, query, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-/* ── FIREBASE CONFIG ── */
+<!-- Firebase compat SDKs — work on any static host including GitHub Pages -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyBvkjzDzNMAh8JqWKT09AWIm0Gf11br0z0",
   authDomain: "valor-92389.firebaseapp.com",
@@ -318,51 +317,40 @@ const firebaseConfig = {
   messagingSenderId: "257185389808",
   appId: "1:257185389808:web:f564b6fb9a86de5f3f7635"
 };
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-/* ── CLOUDINARY CONFIG ── */
-/* Replace these with your Cloudinary credentials after signing up at cloudinary.com */
 const CLOUDINARY_CLOUD = "YOUR_CLOUD_NAME";
-const CLOUDINARY_PRESET = "valor_upload"; /* Create an unsigned upload preset named valor_upload in Cloudinary dashboard */
-
-/* ── PIKA LABS CONFIG ── */
-/* Paste your Pika API key here after signing up at pika.art */
+const CLOUDINARY_PRESET = "valor_upload";
 const PIKA_API_KEY = "";
-
-/* ── ANTHROPIC CONFIG ── */
-/* Paste your Anthropic API key here from console.anthropic.com */
 const ANTHROPIC_KEY = "";
 
-/* ── STATE ── */
 let currentUser = null;
 let currentStoryId = null;
-let uploadedImageURLs = [];
 let selectedVideo = "pika";
 let chatOpen = false;
-let vidTimer = null, vidSecs = 0, vidPlaying = false;
-const VID_TOTAL = 107;
 
-/* ── AUTH STATE LISTENER ── */
-onAuthStateChanged(auth, user => {
+/* ── AUTH STATE ── */
+auth.onAuthStateChanged(user => {
   currentUser = user;
+  const btn = document.getElementById("nav-auth-btn");
+  const nameEl = document.getElementById("nav-user");
   if (user) {
-    document.getElementById("nav-user").textContent = user.displayName || user.email.split("@")[0];
-    document.getElementById("nav-user").style.display = "";
-    document.getElementById("nav-auth-btn").textContent = "Sign Out";
-    document.getElementById("nav-auth-btn").onclick = doSignOut;
-    loadFeed();
+    nameEl.textContent = user.displayName || user.email.split("@")[0];
+    nameEl.style.display = "";
+    btn.textContent = "Sign Out";
+    btn.onclick = doSignOut;
   } else {
-    document.getElementById("nav-user").style.display = "none";
-    document.getElementById("nav-auth-btn").textContent = "Sign In";
-    document.getElementById("nav-auth-btn").onclick = () => showPage("auth");
-    loadFeed();
+    nameEl.style.display = "none";
+    btn.textContent = "Sign In";
+    btn.onclick = () => showPage("auth");
   }
+  loadFeed();
 });
 
 /* ── NAVIGATION ── */
-window.showPage = function(p) {
+function showPage(p) {
   document.querySelectorAll(".page").forEach(el => el.classList.remove("active"));
   document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
   document.getElementById("page-" + p).classList.add("active");
@@ -370,35 +358,35 @@ window.showPage = function(p) {
   if (nb) nb.classList.add("active");
   if (p === "story") document.getElementById("nav-feed").classList.add("active");
   if (p === "feed") loadFeed();
-  if (p === "profile" && currentUser) loadProfile();
+  if (p === "profile") loadProfile();
   window.scrollTo(0, 0);
-};
+}
 
 /* ── AUTH ── */
-window.switchAuthTab = function(tab, btn) {
+function switchAuthTab(tab, btn) {
   document.querySelectorAll(".auth-tab").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   document.getElementById("auth-login").style.display = tab === "login" ? "block" : "none";
   document.getElementById("auth-signup").style.display = tab === "signup" ? "block" : "none";
   document.getElementById("auth-err").style.display = "none";
-};
+}
 
-window.doLogin = async function() {
+async function doLogin() {
   const email = document.getElementById("login-email").value.trim();
   const pw = document.getElementById("login-pw").value;
   if (!email || !pw) { showAuthErr("Please enter your email and password."); return; }
   const btn = document.getElementById("login-btn");
   btn.disabled = true; btn.textContent = "Signing in…";
   try {
-    await signInWithEmailAndPassword(auth, email, pw);
+    await auth.signInWithEmailAndPassword(email, pw);
     showToast("Welcome back!");
     showPage("feed");
   } catch(e) {
     showAuthErr(friendlyAuthError(e.code));
   } finally { btn.disabled = false; btn.textContent = "Sign In"; }
-};
+}
 
-window.doSignup = async function() {
+async function doSignup() {
   const name = document.getElementById("signup-name").value.trim();
   const email = document.getElementById("signup-email").value.trim();
   const pw = document.getElementById("signup-pw").value;
@@ -407,20 +395,20 @@ window.doSignup = async function() {
   const btn = document.getElementById("signup-btn");
   btn.disabled = true; btn.textContent = "Creating account…";
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email, pw);
-    await updateProfile(cred.user, { displayName: name });
+    const cred = await auth.createUserWithEmailAndPassword(email, pw);
+    await cred.user.updateProfile({ displayName: name });
     showToast("Welcome to Valor, " + name.split(" ")[0] + "!");
     showPage("feed");
   } catch(e) {
     showAuthErr(friendlyAuthError(e.code));
   } finally { btn.disabled = false; btn.textContent = "Create Account — Free"; }
-};
+}
 
-window.doSignOut = async function() {
-  await signOut(auth);
+async function doSignOut() {
+  await auth.signOut();
   showToast("Signed out.");
   showPage("feed");
-};
+}
 
 function friendlyAuthError(code) {
   const msgs = {
@@ -434,6 +422,7 @@ function friendlyAuthError(code) {
   };
   return msgs[code] || "Something went wrong. Please try again.";
 }
+
 function showAuthErr(msg) {
   const el = document.getElementById("auth-err");
   el.textContent = msg; el.style.display = "block";
@@ -442,21 +431,18 @@ function showAuthErr(msg) {
 /* ── FEED ── */
 async function loadFeed() {
   const container = document.getElementById("story-cards");
-  container.innerHTML = `<div class="feed-loading">Loading stories…</div>`;
+  if (!container) return;
+  container.innerHTML = "<div class=\"feed-loading\">Loading stories…</div>";
   try {
-    const q = query(collection(db, "stories"), orderBy("createdAt", "desc"));
-    const snap = await getDocs(q);
+    const snap = await db.collection("stories").orderBy("createdAt", "desc").get();
     if (snap.empty) {
-      container.innerHTML = `<div class="feed-empty"><h3>No stories yet</h3><p>Be the first to share a bravery story.</p><button class="btn-red" onclick="showPage('create')">Share Your Story</button></div>`;
+      container.innerHTML = "<div class=\"feed-empty\"><h3>No stories yet</h3><p>Be the first to share a bravery story.</p><button class=\"btn-red\" onclick=\"showPage('create')\">Share Your Story</button></div>";
       return;
     }
     container.innerHTML = "";
-    snap.forEach(docSnap => {
-      const s = docSnap.data();
-      container.appendChild(buildCard(docSnap.id, s));
-    });
+    snap.forEach(d => container.appendChild(buildCard(d.id, d.data())));
   } catch(e) {
-    container.innerHTML = `<div class="feed-empty"><h3>Couldn't load stories</h3><p>Check your internet connection.</p></div>`;
+    container.innerHTML = "<div class=\"feed-empty\"><h3>Couldn't load stories</h3><p>Check your internet connection.</p></div>";
   }
 }
 
@@ -465,165 +451,144 @@ function buildCard(id, s) {
   const likeCount = s.likes ? s.likes.length : 0;
   const initials = (s.authorName || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0,2);
   const colors = ["#c0392b","#8b1a10","#b5860d","#1a5fa8","#1a7a4a","#6b2fa0"];
-  const color = colors[s.authorName ? s.authorName.charCodeAt(0) % colors.length : 0];
+  const color = colors[(s.authorName || "A").charCodeAt(0) % colors.length];
+  const isRTL = /[֐-׿؀-ۿ]/.test(s.title + (s.excerpt || ""));
+  const rtlStyle = isRTL ? " direction:rtl;text-align:right;" : "";
   const div = document.createElement("div");
   div.className = "scard";
-  div.innerHTML = `
-    <div class="scard-media" onclick="openStory('${id}')">
-      ${s.imageURLs && s.imageURLs[0] ? `<img class="scard-thumb" src="${s.imageURLs[0]}" loading="lazy">` : `<div class="scard-media-bg">✦</div>`}
-      <div class="play-ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
-      ${s.videoDuration ? `<div class="dur-tag">${s.videoDuration}</div>` : ""}
-      <div class="cat-tag">${s.category || "Story"}</div>
-    </div>
-    <div class="scard-body">
-      <div class="scard-author">
-        <div class="av" style="background:${color};">${initials}</div>
-        <div><div class="author-name">${s.authorName || "Anonymous"}</div><div class="author-meta">${timeAgo(s.createdAt)} · ${s.readTime || "3"} min read</div></div>
-      </div>
-      <div class="scard-title" onclick="openStory('${id}')">${s.title}</div>
-      <div class="scard-exc">${(s.excerpt || s.body || "").slice(0,140)}…</div>
-      <div class="scard-actions">
-        <button class="scard-act ${liked ? "liked" : ""}" id="like-${id}" onclick="toggleLike('${id}',this)">
-          <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" ${liked ? "" : 'fill="none" stroke="currentColor" stroke-width="1.5"'}/></svg>
-          <span>${likeCount}</span>
-        </button>
-        <button class="scard-act" onclick="openStory('${id}')">
-          <svg viewBox="0 0 24 24"><path d="M21 6.5A2.5 2.5 0 0018.5 4h-13A2.5 2.5 0 003 6.5v8A2.5 2.5 0 005.5 17H7v3l4-3h7.5a2.5 2.5 0 002.5-2.5v-8z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-          <span>${s.commentCount || 0} comments</span>
-        </button>
-        <button class="scard-act" onclick="copyLink('${id}')">
-          <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
-          Share
-        </button>
-      </div>
-    </div>`;
+  div.innerHTML =
+    "<div class=\"scard-media\" onclick=\"openStory('" + id + "')\">"+
+      (s.imageURLs && s.imageURLs[0] ? "<img class=\"scard-thumb\" src=\""+s.imageURLs[0]+"\" loading=\"lazy\">" : "<div class=\"scard-media-bg\">✦</div>")+
+      "<div class=\"play-ring\"><svg viewBox=\"0 0 24 24\"><path d=\"M8 5v14l11-7z\"/></svg></div>"+
+      (s.videoDuration ? "<div class=\"dur-tag\">"+s.videoDuration+"</div>" : "")+
+      "<div class=\"cat-tag\">"+(s.category||"Story")+"</div>"+
+    "</div>"+
+    "<div class=\"scard-body\">"+
+      "<div class=\"scard-author\">"+
+        "<div class=\"av\" style=\"background:"+color+"\">"+initials+"</div>"+
+        "<div><div class=\"author-name\">"+(s.authorName||"Anonymous")+"</div><div class=\"author-meta\">"+timeAgo(s.createdAt)+" · "+(s.readTime||"3")+" min read</div></div>"+
+      "</div>"+
+      "<div class=\"scard-title\" style=\""+rtlStyle+"\" onclick=\"openStory('" + id + "')\">"+s.title+"</div>"+
+      "<div class=\"scard-exc\" style=\""+rtlStyle+"\">"+((s.excerpt||s.body||"").slice(0,140))+"…</div>"+
+      "<div class=\"scard-actions\">"+
+        "<button class=\"scard-act "+(liked?"liked":"")+"\" id=\"like-"+id+"\" onclick=\"toggleLike('" + id + "',this)\">"+
+          "<svg viewBox=\"0 0 24 24\"><path d=\"M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z\" "+(liked?"":"fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"")+"/></svg>"+
+          "<span>"+likeCount+"</span></button>"+
+        "<button class=\"scard-act\" onclick=\"openStory('" + id + "')\"><svg viewBox=\"0 0 24 24\"><path d=\"M21 6.5A2.5 2.5 0 0018.5 4h-13A2.5 2.5 0 003 6.5v8A2.5 2.5 0 005.5 17H7v3l4-3h7.5a2.5 2.5 0 002.5-2.5v-8z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg><span>"+(s.commentCount||0)+" comments</span></button>"+
+        "<button class=\"scard-act\" onclick=\"copyLink('" + id + "')\"><svg viewBox=\"0 0 24 24\"><path d=\"M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z\"/></svg>Share</button>"+
+      "</div>"+
+    "</div>";
   return div;
 }
 
 /* ── OPEN STORY ── */
-window.openStory = async function(id) {
+async function openStory(id) {
   currentStoryId = id;
   showPage("story");
-  document.getElementById("story-content-area").innerHTML = `<div class="feed-loading">Loading story…</div>`;
+  document.getElementById("story-content-area").innerHTML = "<div class=\"feed-loading\">Loading story…</div>";
   try {
-    const snap = await getDoc(doc(db, "stories", id));
-    if (!snap.exists()) { showToast("Story not found."); return; }
-    const s = snap.data();
-    renderStory(id, s);
+    const snap = await db.collection("stories").doc(id).get();
+    if (!snap.exists) { showToast("Story not found."); return; }
+    renderStory(id, snap.data());
     loadComments(id);
   } catch(e) { showToast("Couldn't load story."); }
-};
+}
 
 function renderStory(id, s) {
-  const initials = (s.authorName || "?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+  const initials = (s.authorName||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
   const colors = ["#c0392b","#8b1a10","#b5860d","#1a5fa8","#1a7a4a"];
-  const color = colors[s.authorName ? s.authorName.charCodeAt(0) % colors.length : 0];
+  const color = colors[(s.authorName||"A").charCodeAt(0) % colors.length];
   const liked = currentUser && s.likes && s.likes.includes(currentUser.uid);
+  const isRTL = /[֐-׿؀-ۿ]/.test(s.body || s.title || "");
+  const rtlAttr = isRTL ? " dir=\"rtl\" style=\"text-align:right;direction:rtl;\"" : "";
 
   let imagesHTML = "";
   if (s.imageURLs && s.imageURLs.length > 0) {
-    imagesHTML = `<div class="s-imgs">
-      <div class="main-img"><img src="${s.imageURLs[0]}" alt="Story image"></div>
-      ${s.imageURLs[1] ? `<div class="s-img-cell"><img src="${s.imageURLs[1]}" alt=""></div>` : '<div class="s-img-cell"><div class="s-img-grad">Story moment</div></div>'}
-      ${s.imageURLs[2] ? `<div class="s-img-cell"><img src="${s.imageURLs[2]}" alt=""></div>` : '<div class="s-img-cell"><div class="s-img-grad">Story moment</div></div>'}
-    </div>`;
+    imagesHTML = "<div class=\"s-imgs\">"+
+      "<div class=\"main-img\"><img src=\""+s.imageURLs[0]+"\" alt=\"\"></div>"+
+      (s.imageURLs[1] ? "<div class=\"s-img-cell\"><img src=\""+s.imageURLs[1]+"\" alt=\"\"></div>" : "<div class=\"s-img-cell\"><div class=\"s-img-grad\">Story moment</div></div>")+
+      (s.imageURLs[2] ? "<div class=\"s-img-cell\"><img src=\""+s.imageURLs[2]+"\" alt=\"\"></div>" : "<div class=\"s-img-cell\"><div class=\"s-img-grad\">Story moment</div></div>")+
+    "</div>";
   }
 
   let videoHTML = "";
   if (s.videoURL) {
-    videoHTML = `<div class="vid-wrap" style="margin:0 2rem 2.5rem;">
-      <video class="vid-actual" controls src="${s.videoURL}" style="display:block;"></video>
-    </div>`;
+    videoHTML = "<div style=\"margin:0 2rem 2.5rem;border-radius:14px;overflow:hidden;\"><video controls src=\""+s.videoURL+"\" style=\"width:100%;display:block;\"></video></div>";
   } else if (s.videoPrompt) {
-    const vidId = "vidprog_" + id;
-    videoHTML = `<div style="margin:0 2rem 2.5rem;background:linear-gradient(145deg,#160806,#2d1410);border-radius:14px;padding:2rem 1.5rem;text-align:center;">
-      <div style="width:52px;height:52px;border:3px solid rgba(255,255,255,.15);border-top-color:#c0392b;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;"></div>
-      <div style="font-family:'DM Serif Display',serif;font-size:1.2rem;color:white;margin-bottom:.4rem;">Video is being generated</div>
-      <div style="font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:1.25rem;">Processing with ${s.videoProvider || "Pika Labs"} — usually takes 2-5 minutes</div>
-      <div style="height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;max-width:320px;margin:0 auto .6rem;">
-        <div id="${vidId}" style="height:100%;background:#c0392b;border-radius:2px;width:0;transition:width .6s ease;"></div>
-      </div>
-      <div style="font-size:.75rem;color:rgba(255,255,255,.35);">Refresh the page in a few minutes to see your video</div>
-    </div>`;
-    setTimeout(() => startVidBar(vidId), 200);
+    const vidId = "vp_" + id;
+    videoHTML = "<div id=\""+vidId+"\" style=\"margin:0 2rem 2.5rem;background:linear-gradient(145deg,#160806,#2d1410);border-radius:14px;padding:2rem 1.5rem;text-align:center;\">"+
+      "<div style=\"width:52px;height:52px;border:3px solid rgba(255,255,255,.15);border-top-color:#c0392b;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem;\"></div>"+
+      "<div style=\"font-family:'DM Serif Display',serif;font-size:1.2rem;color:white;margin-bottom:.4rem;\">Video is being generated</div>"+
+      "<div style=\"font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:1.25rem;\">Processing with "+(s.videoProvider||"Pika Labs")+" — usually 2–5 minutes</div>"+
+      "<div style=\"height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;max-width:320px;margin:0 auto .6rem;\">"+
+        "<div id=\"bar_"+id+"\" style=\"height:100%;background:#c0392b;border-radius:2px;width:0;transition:width .6s ease;\"></div>"+
+      "</div>"+
+      "<div style=\"font-size:.75rem;color:rgba(255,255,255,.35);\">Refresh in a few minutes to see your video</div>"+
+    "</div>";
+    setTimeout(() => startVidBar("bar_" + id), 200);
   }
 
-  const bodyRTL = /[֐-׿؀-ۿ]/.test(s.body || s.title || "");
-  const rtlAttr = bodyRTL ? ' dir="rtl" style="text-align:right;direction:rtl;"' : '';
-  document.getElementById("story-content-area").innerHTML = `
-    <div class="story-hdr">
-      <div class="s-cat-tag">${s.category || "Bravery Story"}</div>
-      <h1 class="s-title"${rtlAttr}>${s.title}</h1>
-      <p class="s-sub"${rtlAttr}>${s.excerpt || ""}</p>
-      <div class="s-byline">
-        <div class="av" style="background:${color};width:42px;height:42px;font-size:.95rem;">${initials}</div>
-        <div><div class="author-name">${s.authorName}</div><div class="author-meta">${timeAgo(s.createdAt)} · ${s.readTime || "3"} min read · ${s.likes ? s.likes.length : 0} likes</div></div>
-      </div>
-      <div class="s-share">
-        <button class="s-share-btn" onclick="copyLink('${id}')">🔗 Copy link</button>
-        <button class="s-share-btn" id="story-like-btn" onclick="toggleLike('${id}',this,true)">${liked ? "❤️ Liked" : "♡ Like"}</button>
-      </div>
-    </div>
-    ${videoHTML}
-    ${imagesHTML}
-    <div class="s-text"><div class="s-prose"${rtlAttr}>${formatBody(s.body)}</div></div>`;
-}
-
-function formatBody(text) {
-  if (!text) return "";
-  const rtl = /[֐-׿؀-ۿ]/.test(text);
-  return text.split("\n\n").map(p => {
-    const t = p.trim(); if(!t) return "";
-    const pRTL = /[֐-׿؀-ۿ]/.test(t);
-    const dir = pRTL ? ' dir="rtl" style="text-align:right;direction:rtl;"' : '';
-    return `<p${dir}>${t.replace(/\n/g,"<br>")}</p>`;
-  }).join("");
+  document.getElementById("story-content-area").innerHTML =
+    "<div class=\"story-hdr\">"+
+      "<div class=\"s-cat-tag\">"+(s.category||"Bravery Story")+"</div>"+
+      "<h1 class=\"s-title\""+rtlAttr+">"+s.title+"</h1>"+
+      "<p class=\"s-sub\""+rtlAttr+">"+(s.excerpt||"")+"</p>"+
+      "<div class=\"s-byline\">"+
+        "<div class=\"av\" style=\"background:"+color+";width:42px;height:42px;font-size:.95rem;\">"+initials+"</div>"+
+        "<div><div class=\"author-name\">"+s.authorName+"</div><div class=\"author-meta\">"+timeAgo(s.createdAt)+" · "+(s.readTime||"3")+" min read · "+(s.likes?s.likes.length:0)+" likes</div></div>"+
+      "</div>"+
+      "<div class=\"s-share\">"+
+        "<button class=\"s-share-btn\" onclick=\"copyLink('" + id + "')\">🔗 Copy link</button>"+
+        "<button class=\"s-share-btn\" id=\"story-like-btn\" onclick=\"toggleLike('" + id + "',this,true)\">"+(liked?"❤️ Liked":"♡ Like")+"</button>"+
+      "</div>"+
+    "</div>"+
+    videoHTML + imagesHTML +
+    "<div class=\"s-text\"><div class=\"s-prose\""+rtlAttr+">"+formatBody(s.body)+"</div></div>";
 }
 
 /* ── LIKES ── */
-window.toggleLike = async function(storyId, btn, isStoryPage = false) {
+async function toggleLike(storyId, btn, isStoryPage) {
   if (!currentUser) { showModal("Sign in to like stories", "Create a free account to like and save bravery stories."); return; }
-  const ref = doc(db, "stories", storyId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return;
+  const ref = db.collection("stories").doc(storyId);
+  const snap = await ref.get();
+  if (!snap.exists) return;
   const s = snap.data();
   const liked = s.likes && s.likes.includes(currentUser.uid);
-  await updateDoc(ref, { likes: liked ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid) });
+  await ref.update({ likes: liked ? firebase.firestore.FieldValue.arrayRemove(currentUser.uid) : firebase.firestore.FieldValue.arrayUnion(currentUser.uid) });
   if (isStoryPage) {
     btn.textContent = liked ? "♡ Like" : "❤️ Liked";
   } else {
     btn.classList.toggle("liked", !liked);
     const span = btn.querySelector("span");
-    if (span) span.textContent = (parseInt(span.textContent) || 0) + (liked ? -1 : 1);
+    if (span) span.textContent = (parseInt(span.textContent)||0) + (liked ? -1 : 1);
   }
-};
+}
 
 /* ── COMMENTS ── */
 async function loadComments(storyId) {
   const list = document.getElementById("cmt-list");
+  if (!list) return;
   list.innerHTML = "";
   try {
-    const q = query(collection(db, "stories", storyId, "comments"), orderBy("createdAt", "desc"));
-    const snap = await getDocs(q);
+    const snap = await db.collection("stories").doc(storyId).collection("comments").orderBy("createdAt","desc").get();
     const h3 = document.querySelector(".comments h3");
     if (h3) h3.textContent = snap.size + " comment" + (snap.size !== 1 ? "s" : "");
     snap.forEach(d => {
       const c = d.data();
-      const initials = (c.authorName || "?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+      const initials = (c.authorName||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
       const div = document.createElement("div");
       div.className = "cmt";
-      div.innerHTML = `<div class="av" style="background:var(--accent);font-size:.72rem;">${initials}</div>
-        <div class="cmt-body">
-          <div class="cmt-name">${c.authorName}</div>
-          <div class="cmt-text">${c.text}</div>
-          <div class="cmt-meta">${timeAgo(c.createdAt)}</div>
-        </div>`;
+      div.innerHTML =
+        "<div class=\"av\" style=\"background:var(--accent);font-size:.72rem;\">"+initials+"</div>"+
+        "<div class=\"cmt-body\"><div class=\"cmt-name\">"+c.authorName+"</div>"+
+        "<div class=\"cmt-text\">"+c.text+"</div>"+
+        "<div class=\"cmt-meta\">"+timeAgo(c.createdAt)+"</div></div>";
       list.appendChild(div);
     });
   } catch(e) {}
 }
 
-window.addComment = async function() {
+async function addComment() {
   if (!currentUser) { showModal("Sign in to comment", "Create a free account to join the conversation."); return; }
   const box = document.getElementById("new-cmt");
   const text = box.value.trim();
@@ -631,17 +596,19 @@ window.addComment = async function() {
   const btn = document.getElementById("cmt-post-btn");
   btn.disabled = true;
   try {
-    await addDoc(collection(db, "stories", currentStoryId, "comments"), {
+    await db.collection("stories").doc(currentStoryId).collection("comments").add({
       text, authorName: currentUser.displayName || currentUser.email.split("@")[0],
-      authorId: currentUser.uid, createdAt: serverTimestamp()
+      authorId: currentUser.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    await updateDoc(doc(db, "stories", currentStoryId), { commentCount: (await getDoc(doc(db, "stories", currentStoryId))).data().commentCount + 1 || 1 });
+    const ref = db.collection("stories").doc(currentStoryId);
+    const snap = await ref.get();
+    await ref.update({ commentCount: (snap.data().commentCount || 0) + 1 });
     box.value = "";
     loadComments(currentStoryId);
     showToast("Comment posted!");
   } catch(e) { showToast("Couldn't post comment."); }
   finally { btn.disabled = false; }
-};
+}
 
 /* ── PROFILE ── */
 async function loadProfile() {
@@ -651,39 +618,34 @@ async function loadProfile() {
   document.getElementById("prof-initials").textContent = initials;
   document.getElementById("prof-name").textContent = name;
   document.getElementById("prof-email").textContent = currentUser.email;
-  const q = query(collection(db, "stories"), orderBy("createdAt","desc"));
-  const snap = await getDocs(q);
+  const snap = await db.collection("stories").orderBy("createdAt","desc").get();
   let myStories = [], totalLikes = 0;
   snap.forEach(d => { if (d.data().authorId === currentUser.uid) { myStories.push({id:d.id,...d.data()}); totalLikes += (d.data().likes||[]).length; }});
   document.getElementById("prof-story-count").textContent = myStories.length;
   document.getElementById("prof-likes-count").textContent = totalLikes;
   const grid = document.getElementById("prof-stories-grid");
-  grid.innerHTML = myStories.length === 0 ? `<p style="color:var(--text2);font-size:.9rem;">No stories yet. <span style="color:var(--accent);cursor:pointer;" onclick="showPage('create')">Share your first story →</span></p>` : "";
+  grid.innerHTML = myStories.length === 0 ? "<p style=\"color:var(--text2);font-size:.9rem;\">No stories yet. <span style=\"color:var(--accent);cursor:pointer;\" onclick=\"showPage('create')\">Share your first story →</span></p>" : "";
   myStories.forEach(s => grid.appendChild(buildCard(s.id, s)));
 }
 
-/* ── IMAGE UPLOAD (Cloudinary) ── */
-window.handleFiles = function(files) {
+/* ── IMAGE UPLOAD ── */
+function handleFiles(files) {
   const grid = document.getElementById("img-grid");
   Array.from(files).slice(0,12).forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
       const d = document.createElement("div");
       d.className = "img-thumb";
-      d.innerHTML = `<img src="${e.target.result}"><button class="img-rm" onclick="this.parentNode.remove()">✕</button>`;
-      d.dataset.file = "pending";
       d._file = file;
+      d.innerHTML = "<img src=\""+e.target.result+"\"><button class=\"img-rm\" onclick=\"this.parentNode.remove()\">✕</button>";
       grid.appendChild(d);
     };
     reader.readAsDataURL(file);
   });
-};
+}
 
 async function uploadImagesToCloudinary() {
-  if (CLOUDINARY_CLOUD === "YOUR_CLOUD_NAME") {
-    showToast("Cloudinary not configured — images skipped.");
-    return [];
-  }
+  if (CLOUDINARY_CLOUD === "YOUR_CLOUD_NAME") return [];
   const thumbs = document.querySelectorAll(".img-thumb");
   const urls = [];
   for (const thumb of thumbs) {
@@ -692,7 +654,7 @@ async function uploadImagesToCloudinary() {
     fd.append("file", thumb._file);
     fd.append("upload_preset", CLOUDINARY_PRESET);
     try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, { method:"POST", body:fd });
+      const res = await fetch("https://api.cloudinary.com/v1_1/"+CLOUDINARY_CLOUD+"/image/upload", {method:"POST",body:fd});
       const data = await res.json();
       if (data.secure_url) urls.push(data.secure_url);
     } catch(e) {}
@@ -700,37 +662,26 @@ async function uploadImagesToCloudinary() {
   return urls;
 }
 
-/* ── AI PROMPT GENERATION (Claude) ── */
 async function generateVideoPrompt(title, category, body) {
-  if (!ANTHROPIC_KEY) return `Cinematic documentary: ${title}. Category: ${category}. ${body.slice(0,100)}`;
-  const system = `You are Valor's editorial AI. Transform a bravery story into a precise cinematic video prompt for an AI video generator (90-120 words). Use vivid specific imagery. No clichés. Describe lighting, motion, atmosphere, close-ups. Feel like a high-end documentary. Output ONLY the prompt.`;
+  if (!ANTHROPIC_KEY) return "Cinematic documentary: "+title+". "+body.slice(0,100);
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method:"POST",
       headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:200, system, messages:[{role:"user",content:`Title: ${title}\nCategory: ${category}\nStory:\n${body.slice(0,800)}`}] })
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:200,
+        system:"You are Valor editorial AI. Transform a bravery story into a precise cinematic video prompt (90-120 words). Vivid imagery, no clichés, documentary style. Output ONLY the prompt.",
+        messages:[{role:"user",content:"Title: "+title+"
+Category: "+category+"
+Story:
+"+body.slice(0,800)}]})
     });
     const data = await res.json();
     return data.content?.[0]?.text || "";
-  } catch(e) { return `Cinematic: ${title}. ${body.slice(0,80)}`; }
+  } catch(e) { return "Cinematic: "+title+". "+body.slice(0,80); }
 }
 
-/* ── PIKA LABS VIDEO GENERATION ── */
-async function generatePikaVideo(prompt) {
-  if (!PIKA_API_KEY) return null;
-  try {
-    const res = await fetch("https://api.pika.art/v1/generate", {
-      method:"POST",
-      headers:{"Authorization":"Bearer "+PIKA_API_KEY,"Content-Type":"application/json"},
-      body:JSON.stringify({ prompt, duration:90, aspectRatio:"16:9", style:"cinematic" })
-    });
-    const data = await res.json();
-    return data.videoUrl || data.url || null;
-  } catch(e) { return null; }
-}
-
-/* ── CREATE STEPS ── */
-window.goStep = function(n) {
+/* ── CREATE ── */
+function goStep(n) {
   for (let i=1;i<=4;i++) {
     document.getElementById("cs"+i).classList.add("hidden");
     const s = document.getElementById("si"+i);
@@ -740,10 +691,10 @@ window.goStep = function(n) {
   }
   document.getElementById("cs"+n).classList.remove("hidden");
   window.scrollTo(0,0);
-};
+}
 
-window.startGenerate = async function() {
-  if (!currentUser) { showModal("Sign in to publish", "Create a free account to share your bravery story."); return; }
+async function startGenerate() {
+  if (!currentUser) { showModal("Sign in to publish", "Create a free account to share your story."); return; }
   const title = document.getElementById("s-title").value.trim();
   const body = document.getElementById("s-text").value.trim();
   const category = document.getElementById("s-cat").value;
@@ -752,36 +703,26 @@ window.startGenerate = async function() {
   const fill = document.getElementById("prog-fill");
   const statusEl = document.getElementById("gen-status");
   const pctEl = document.getElementById("prog-pct");
-
-  const setProgress = (pct, msg) => { fill.style.width=pct+"%"; pctEl.textContent=pct+"%"; if(msg) statusEl.textContent=msg; };
-
-  setProgress(5, "Uploading your images…");
+  const setP = (p, msg) => { fill.style.width=p+"%"; pctEl.textContent=p+"%"; if(msg) statusEl.textContent=msg; };
+  setP(5, "Uploading your images…");
   const imageURLs = await uploadImagesToCloudinary();
-
-  setProgress(25, "Crafting your cinematic video prompt with Claude…");
+  setP(30, "Crafting your video prompt with Claude…");
   const videoPrompt = await generateVideoPrompt(title, category, body);
-
-  setProgress(50, "Sending to Pika Labs for video generation…");
-  const videoURL = await generatePikaVideo(videoPrompt);
-
-  setProgress(75, "Saving your story…");
+  setP(60, "Saving your story…");
   const wordCount = body.split(/\s+/).length;
-  const readTime = Math.max(1, Math.ceil(wordCount / 200));
-  const excerpt = body.slice(0, 160).trim();
-
+  const readTime = Math.max(1, Math.ceil(wordCount/200));
   try {
-    const docRef = await addDoc(collection(db, "stories"), {
-      title, body, excerpt, category,
+    const docRef = await db.collection("stories").add({
+      title, body, excerpt: body.slice(0,160).trim(), category,
       authorId: currentUser.uid,
       authorName: currentUser.displayName || currentUser.email.split("@")[0],
-      imageURLs, videoURL: videoURL || null,
-      videoPrompt, videoProvider: selectedVideo,
-      videoDuration: videoURL ? "1:30" : null,
-      readTime: readTime + " min", likes: [], commentCount: 0,
-      createdAt: serverTimestamp()
+      imageURLs, videoURL: null, videoPrompt,
+      videoProvider: selectedVideo,
+      readTime: readTime+" min", likes: [], commentCount: 0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     currentStoryId = docRef.id;
-    setProgress(100, "Done!");
+    setP(100, "Done!");
     setTimeout(() => {
       document.getElementById("gen-running").classList.add("hidden");
       document.getElementById("gen-done").classList.remove("hidden");
@@ -791,43 +732,51 @@ window.startGenerate = async function() {
     showToast("Couldn't save story. Please try again.");
     goStep(3);
   }
-};
+}
 
-window.publishStory = function() {
+function publishStory() {
   showToast("Your story is live on Valor!");
-  setTimeout(() => { openStory(currentStoryId); }, 900);
-};
+  setTimeout(() => openStory(currentStoryId), 900);
+}
 
 /* ── PROVIDER SELECT ── */
-window.toggleAdv = function(name) {
+function toggleAdv(name) {
   const panel = document.getElementById(name+"-adv");
   const btn = document.getElementById(name+"-toggle");
-  const open = panel.classList.toggle("open");
-  btn.classList.toggle("open", open);
-};
-window.selectOpt = function(el, name, val) {
+  panel.classList.toggle("open");
+  btn.classList.toggle("open", panel.classList.contains("open"));
+}
+
+function selectOpt(el, name, val) {
   if (name === "video") selectedVideo = val;
   el.closest(".adv-opts").querySelectorAll(".adv-opt").forEach(o=>o.classList.remove("sel"));
   el.classList.add("sel");
   const keyRow = document.getElementById(name+"-key-row");
   if (keyRow) keyRow.classList.toggle("show", val !== "valor");
   showToast(el.querySelector("h5").textContent.replace(/\s*(Free|Paid).*/,"")+" selected");
-};
+}
 
 /* ── UTILS ── */
-window.copyLink = function(id) {
-  navigator.clipboard.writeText(window.location.href.split("?")[0]+"?story="+id).then(()=>showToast("Link copied!")).catch(()=>showToast("Link copied!"));
-};
-
-function startVidBar(vidId) {
-  const bar = document.getElementById(vidId);
+function startVidBar(barId) {
+  const bar = document.getElementById(barId);
   if (!bar) return;
   let pct = 0;
   const iv = setInterval(() => {
-    pct = Math.min(pct + Math.random() * 1.2 + 0.3, 92);
-    bar.style.width = pct + '%';
+    pct = Math.min(pct + Math.random()*1.2 + 0.3, 92);
+    bar.style.width = pct + "%";
     if (pct >= 92) clearInterval(iv);
   }, 800);
+}
+
+function formatBody(text) {
+  if (!text) return "";
+  const isRTL = /[֐-׿؀-ۿ]/.test(text);
+  return text.split("\n\n").map(p => {
+    const t = p.trim(); if (!t) return "";
+    const pRTL = /[֐-׿؀-ۿ]/.test(t);
+    const dir = pRTL ? " dir=\"rtl\" style=\"text-align:right;direction:rtl;\"" : "";
+    return "<p"+dir+">"+t.replace(/\n/g,"<br>")+"</p>";
+  }).join("");
 }
 
 function timeAgo(ts) {
@@ -840,50 +789,55 @@ function timeAgo(ts) {
   return Math.floor(secs/604800)+" weeks ago";
 }
 
+function copyLink(id) {
+  const url = window.location.href.split("?")[0] + "?story=" + id;
+  navigator.clipboard.writeText(url).then(() => showToast("Link copied!")).catch(() => showToast("Link copied!"));
+}
+
 function showToast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg; t.classList.add("show");
   clearTimeout(t._timer);
-  t._timer = setTimeout(()=>t.classList.remove("show"), 2500);
+  t._timer = setTimeout(() => t.classList.remove("show"), 2500);
 }
 
-window.showModal = function(title, body) {
+function showModal(title, body) {
   document.getElementById("modal-title").textContent = title;
   document.getElementById("modal-body").textContent = body;
   document.getElementById("modal-bg").classList.add("open");
-};
-window.closeModal = function() { document.getElementById("modal-bg").classList.remove("open"); };
+}
+
+function closeModal() { document.getElementById("modal-bg").classList.remove("open"); }
 
 /* ── CHAT ── */
-window.toggleChat = function() { chatOpen ? closeChatPanel() : openChatPanel(); };
+function toggleChat() { chatOpen ? closeChatPanel() : openChatPanel(); }
 function openChatPanel() { chatOpen=true; document.getElementById("chat-panel").classList.add("open"); document.querySelector(".chat-notif").style.display="none"; }
 function closeChatPanel() { chatOpen=false; document.getElementById("chat-panel").classList.remove("open"); }
-window.closeChatPanel = closeChatPanel;
-window.sendChat = function() {
+function sendChat() {
   const inp = document.getElementById("chat-inp");
   const msg = inp.value.trim(); if(!msg) return;
   const list = document.getElementById("chat-msgs");
   const d = document.createElement("div");
-  d.innerHTML = `<div class="cmsg me">${msg}</div>`;
+  d.innerHTML = "<div class=\"cmsg me\">"+msg+"</div>";
   list.appendChild(d); list.scrollTop=list.scrollHeight; inp.value="";
-  const replies = ["So inspiring!","Thank you for sharing ❤️","This community is incredible.","Welcome!"];
-  setTimeout(()=>{
-    const r=document.createElement("div");
-    r.innerHTML=`<div class="cmsg-name">Community</div><div class="cmsg them">${replies[Math.floor(Math.random()*replies.length)]}</div>`;
+  const replies = ["So inspiring!","Thank you ❤️","This community is incredible.","Welcome!"];
+  setTimeout(() => {
+    const r = document.createElement("div");
+    r.innerHTML = "<div class=\"cmsg-name\">Community</div><div class=\"cmsg them\">"+replies[Math.floor(Math.random()*replies.length)]+"</div>";
     list.appendChild(r); list.scrollTop=list.scrollHeight;
-  },900);
-};
-
-/* ── DEEP LINK: open story from URL param ── */
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get("story")) { setTimeout(()=>openStory(urlParams.get("story")), 500); }
+  }, 900);
+}
 
 /* ── CHIPS ── */
-document.querySelectorAll(".chip").forEach(c => {
-  c.addEventListener("click", () => {
-    document.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
-    c.classList.add("on");
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".chip").forEach(c => {
+    c.addEventListener("click", () => {
+      document.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
+      c.classList.add("on");
+    });
   });
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get("story")) setTimeout(() => openStory(urlParams.get("story")), 800);
 });
 </script>
 
